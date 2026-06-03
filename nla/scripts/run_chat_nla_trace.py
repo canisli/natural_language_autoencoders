@@ -241,17 +241,26 @@ def _read_rows(parquet_path: str) -> tuple[list[dict[str, Any]], np.ndarray]:
 
 
 def _decode_parquet(args: argparse.Namespace) -> None:
-    from nla.scripts.decode_token_activations import TransformersDecoder
+    from nla.scripts.decode_token_activations import SGLangDecoder, TransformersDecoder
 
     print(f"[nla] reading activations from {args.parquet_output}", flush=True)
     metadata, vectors = _read_rows(args.parquet_output)
     decode_count = len(vectors) if args.decode_limit is None else min(args.decode_limit, len(vectors))
     print(
         f"[nla] loading AV checkpoint: {args.nla_checkpoint} "
-        f"dtype={args.torch_dtype} device={args.device} decode_count={decode_count}/{len(vectors)}",
+        f"backend={args.nla_backend} dtype={args.torch_dtype} device={args.device} "
+        f"device_map={args.nla_device_map} decode_count={decode_count}/{len(vectors)}",
         flush=True,
     )
-    decoder = TransformersDecoder(args.nla_checkpoint, args.device, args.torch_dtype)
+    if args.nla_backend == "sglang":
+        decoder = SGLangDecoder(args.nla_checkpoint, args.sglang_url)
+    else:
+        decoder = TransformersDecoder(
+            args.nla_checkpoint,
+            args.device,
+            args.torch_dtype,
+            device_map=args.nla_device_map,
+        )
     out = Path(args.trace_output)
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w") as f:
@@ -281,6 +290,18 @@ def main() -> None:
     p.add_argument("--layer-index", type=int, default=20)
     p.add_argument("--device", default="cuda")
     p.add_argument("--device-map", default="auto", help='Use "none" to load the whole model on --device.')
+    p.add_argument(
+        "--nla-backend",
+        choices=("transformers", "sglang"),
+        default="transformers",
+        help="Backend for decoding token activations with the NLA AV.",
+    )
+    p.add_argument(
+        "--nla-device-map",
+        default="none",
+        help='For --nla-backend transformers: Accelerate device map, e.g. "auto"; "none" moves the whole AV to --device.',
+    )
+    p.add_argument("--sglang-url", default="http://localhost:30000")
     p.add_argument("--torch-dtype", type=_torch_dtype, default=torch.bfloat16)
     p.add_argument("--hf-cache-dir", default=str(_DEFAULT_HF_HUB_CACHE))
     p.add_argument(
@@ -314,6 +335,7 @@ def main() -> None:
     if torch.cuda.is_available():
         print("[base] clearing CUDA cache before loading NLA AV", flush=True)
         torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
 
     _decode_parquet(args)
 

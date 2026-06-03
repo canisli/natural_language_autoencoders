@@ -64,6 +64,22 @@ def _read_jsonl(path: str) -> list[dict[str, Any]]:
     return rows
 
 
+def split_train_eval(
+    records: list[dict[str, Any]],
+    eval_fraction: float,
+    seed: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if not 0.0 < eval_fraction < 1.0:
+        raise ValueError(f"eval fraction must be between 0 and 1, got {eval_fraction}")
+    if len(records) < 2:
+        raise ValueError("need at least two records for an 80/20 train/eval split")
+
+    shuffled = list(records)
+    random.Random(seed).shuffle(shuffled)
+    eval_size = max(1, min(len(shuffled) - 1, round(len(shuffled) * eval_fraction)))
+    return shuffled[eval_size:], shuffled[:eval_size]
+
+
 class ChatSFTDataset(Dataset):
     def __init__(self, records: list[dict[str, Any]], tokenizer, max_length: int):
         self.examples: list[dict[str, list[int]]] = []
@@ -145,7 +161,9 @@ class LoRALinear(nn.Module):
         self.dropout = nn.Dropout(dropout)
         adapter_device = base.weight.device if base.weight.device.type != "meta" else torch.device("cpu")
         self.lora_a = nn.Parameter(torch.empty(rank, base.in_features, dtype=base.weight.dtype, device=adapter_device))
-        self.lora_b = nn.Parameter(torch.zeros(base.out_features, rank, dtype=base.weight.dtype, device=adapter_device))
+        self.lora_b = nn.Parameter(
+            torch.zeros(base.out_features, rank, dtype=base.weight.dtype, device=adapter_device)
+        )
         nn.init.kaiming_uniform_(self.lora_a, a=math.sqrt(5))
         for param in self.base.parameters():
             param.requires_grad = False
@@ -178,7 +196,13 @@ def _set_child(parent: nn.Module, child_name: str, child: nn.Module) -> None:
         setattr(parent, child_name, child)
 
 
-def inject_lora(model: nn.Module, target_modules: tuple[str, ...], rank: int, alpha: float, dropout: float) -> list[str]:
+def inject_lora(
+    model: nn.Module,
+    target_modules: tuple[str, ...],
+    rank: int,
+    alpha: float,
+    dropout: float,
+) -> list[str]:
     replacements: list[tuple[nn.Module, str, nn.Linear, str]] = []
     for module_name, module in model.named_modules():
         for child_name, child in module.named_children():
@@ -224,6 +248,24 @@ def move_batch(batch: dict[str, torch.Tensor], device: torch.device) -> dict[str
     return {k: v.to(device) for k, v in batch.items()}
 
 
+def evaluate_loss(model: nn.Module, loader: DataLoader, input_device: torch.device) -> float:
+    was_training = model.training
+    model.eval()
+    total_loss = 0.0
+    total_batches = 0
+    with torch.no_grad():
+        for batch in loader:
+            batch = move_batch(batch, input_device)
+            outputs = model(**batch)
+            total_loss += float(outputs.loss.detach().cpu())
+            total_batches += 1
+    if was_training:
+        model.train()
+    if total_batches == 0:
+        raise ValueError("eval loader was empty")
+    return total_loss / total_batches
+
+
 def format_duration(seconds: float) -> str:
     seconds = max(0, int(seconds))
     hours, rem = divmod(seconds, 3600)
@@ -259,6 +301,7 @@ def main() -> None:
     p.add_argument("--max-steps", type=int, default=300)
     p.add_argument("--batch-size", type=int, default=1)
     p.add_argument("--grad-accum-steps", type=int, default=16)
+    p.add_argument("--eval-fraction", type=float, default=0.2, help="Fraction of --train-jsonl held out for eval.")
     p.add_argument("--lr", type=float, default=2e-4)
     p.add_argument("--weight-decay", type=float, default=0.0)
     p.add_argument("--seed", type=int, default=7)
@@ -268,8 +311,18 @@ def main() -> None:
     p.add_argument("--target-modules", default=",".join(DEFAULT_TARGET_MODULES))
     p.add_argument("--gradient-checkpointing", action="store_true")
     p.add_argument("--log-every", type=int, default=10)
+    p.add_argument(
+        "--eval-every",
+        type=int,
+        default=1,
+        help="Run eval every N optimizer steps; <=0 disables eval logs.",
+    )
     p.add_argument("--max-shard-size", default="4GB")
-    p.add_argument("--no-merge", action="store_true", help="Only save LoRA adapter weights; skip merged HF checkpoint.")
+    p.add_argument(
+        "--no-merge",
+        action="store_true",
+        help="Only save LoRA adapter weights; skip merged HF checkpoint.",
+    )
     args = p.parse_args()
 
     random.seed(args.seed)
@@ -290,17 +343,30 @@ def main() -> None:
     tokenizer.padding_side = "right"
 
     records = _read_jsonl(args.train_jsonl)
-    dataset = ChatSFTDataset(records, tokenizer, max_length=args.max_length)
-    label_counts = [sum(1 for label in ex["labels"] if label != IGNORE_INDEX) for ex in dataset.examples[:8]]
+    train_records, eval_records = split_train_eval(records, eval_fraction=args.eval_fraction, seed=args.seed)
+    train_dataset = ChatSFTDataset(train_records, tokenizer, max_length=args.max_length)
+    eval_dataset = ChatSFTDataset(eval_records, tokenizer, max_length=args.max_length)
+    train_label_counts = [
+        sum(1 for label in ex["labels"] if label != IGNORE_INDEX) for ex in train_dataset.examples[:8]
+    ]
+    eval_label_counts = [sum(1 for label in ex["labels"] if label != IGNORE_INDEX) for ex in eval_dataset.examples[:8]]
     print(
-        f"loaded {len(dataset)}/{len(records)} SFT examples after masking; "
-        f"assistant label counts sample={label_counts}",
+        f"loaded {len(train_dataset)} train and {len(eval_dataset)} eval SFT examples after masking "
+        f"from {len(records)} records ({100 * (1 - args.eval_fraction):.0f}/{100 * args.eval_fraction:.0f} split); "
+        f"train assistant label counts sample={train_label_counts}; "
+        f"eval assistant label counts sample={eval_label_counts}",
         flush=True,
     )
-    loader = DataLoader(
-        dataset,
+    train_loader = DataLoader(
+        train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
+        collate_fn=lambda batch: collate_batch(batch, tokenizer.pad_token_id),
+    )
+    eval_loader = DataLoader(
+        eval_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
         collate_fn=lambda batch: collate_batch(batch, tokenizer.pad_token_id),
     )
 
@@ -343,7 +409,9 @@ def main() -> None:
     )
     input_device = model.get_input_embeddings().weight.device
 
-    total_update_steps = args.max_steps if args.max_steps > 0 else math.ceil(args.epochs * len(loader) / args.grad_accum_steps)
+    total_update_steps = (
+        args.max_steps if args.max_steps > 0 else math.ceil(args.epochs * len(train_loader) / args.grad_accum_steps)
+    )
     step = 0
     optimizer.zero_grad(set_to_none=True)
     running_loss = 0.0
@@ -352,7 +420,7 @@ def main() -> None:
     start_time = time.monotonic()
 
     while step < total_update_steps:
-        for batch in loader:
+        for batch in train_loader:
             batch = move_batch(batch, input_device)
             outputs = model(**batch)
             loss = outputs.loss / args.grad_accum_steps
@@ -370,12 +438,17 @@ def main() -> None:
             step += 1
 
             if step % args.log_every == 0 or step == 1:
+                eval_loss = None
+                if args.eval_every > 0 and (step % args.eval_every == 0 or step == 1):
+                    eval_loss = evaluate_loss(model, eval_loader, input_device)
                 elapsed = time.monotonic() - start_time
                 seconds_per_step = elapsed / max(step, 1)
                 eta = seconds_per_step * max(total_update_steps - step, 0)
+                eval_loss_text = f" eval_loss={eval_loss:.4f}" if eval_loss is not None else ""
                 print(
                     f"step {step}/{total_update_steps} "
-                    f"loss={running_loss / max(running_count, 1):.4f} "
+                    f"train_loss={running_loss / max(running_count, 1):.4f}"
+                    f"{eval_loss_text} "
                     f"elapsed={format_duration(elapsed)} eta={format_duration(eta)}",
                     flush=True,
                 )

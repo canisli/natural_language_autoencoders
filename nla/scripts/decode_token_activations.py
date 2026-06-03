@@ -69,26 +69,34 @@ class SGLangDecoder:
 
 
 class TransformersDecoder:
-    def __init__(self, checkpoint: str, device: str, dtype: torch.dtype):
+    def __init__(self, checkpoint: str, device: str, dtype: torch.dtype, *, device_map: str = "none"):
         self.device = device
         self.dtype = dtype
         self.client = NLAClient(checkpoint, sglang_url="http://unused.local")
-        self.model = AutoModelForCausalLM.from_pretrained(
-            checkpoint,
-            torch_dtype=dtype,
-            trust_remote_code=True,
-        ).to(device).eval()
+        model_kwargs = {
+            "torch_dtype": dtype,
+            "trust_remote_code": True,
+            "low_cpu_mem_usage": True,
+        }
+        if device_map != "none":
+            model_kwargs["device_map"] = device_map
+        self.model = AutoModelForCausalLM.from_pretrained(checkpoint, **model_kwargs).eval()
+        if device_map == "none":
+            self.model = self.model.to(device)
+            self.input_device = torch.device(device)
+        else:
+            self.input_device = self.model.get_input_embeddings().weight.device
 
     def generate(self, vector: np.ndarray, args: argparse.Namespace) -> str:
         embeds_np, _ = self.client._build_embeds(torch.as_tensor(vector), None)
         inputs_embeds = torch.from_numpy(embeds_np).unsqueeze(0).to(
-            device=self.device,
+            device=self.input_device,
             dtype=self.dtype,
         )
         attention_mask = torch.ones(
             inputs_embeds.shape[:2],
             dtype=torch.long,
-            device=self.device,
+            device=self.input_device,
         )
 
         do_sample = args.temperature > 0
@@ -123,6 +131,11 @@ def main() -> None:
     p.add_argument("--backend", choices=("sglang", "transformers"), default="sglang")
     p.add_argument("--sglang-url", default="http://localhost:30000")
     p.add_argument("--device", default=_default_device(), help="For --backend transformers: cuda, mps, or cpu.")
+    p.add_argument(
+        "--device-map",
+        default="none",
+        help='For --backend transformers: Accelerate device map, e.g. "auto"; "none" moves the whole model to --device.',
+    )
     p.add_argument("--torch-dtype", type=_torch_dtype, default=torch.float16)
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--temperature", type=float, default=0.7)
@@ -134,7 +147,12 @@ def main() -> None:
     if args.backend == "sglang":
         decoder = SGLangDecoder(args.checkpoint, args.sglang_url)
     else:
-        decoder = TransformersDecoder(args.checkpoint, args.device, args.torch_dtype)
+        decoder = TransformersDecoder(
+            args.checkpoint,
+            args.device,
+            args.torch_dtype,
+            device_map=args.device_map,
+        )
 
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)

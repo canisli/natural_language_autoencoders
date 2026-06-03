@@ -44,6 +44,10 @@ The trainer defaults to local-only loading and looks in `./hf_cache`, matching t
   --gradient-checkpointing
 ```
 
+The trainer shuffles `--train-jsonl` with `--seed` and holds out 20% for eval by
+default. Progress logs include `train_loss` and `eval_loss`; use
+`--eval-fraction` or `--eval-every` to change that behavior.
+
 Outputs:
 
 - `runs/orchid_gemma27b_lora/adapter/`
