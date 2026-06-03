@@ -48,9 +48,14 @@ The trainer shuffles `--train-jsonl` with `--seed` and holds out 20% for eval by
 default. Progress logs include `train_loss` and `eval_loss`; use
 `--eval-fraction` or `--eval-every` to change that behavior.
 
+Adapter checkpoints are saved every 10 optimizer steps by default under
+`runs/orchid_gemma27b_lora/checkpoints/step_000010/`; use `--save-every` to
+change or disable periodic saves.
+
 Outputs:
 
 - `runs/orchid_gemma27b_lora/adapter/`
+- `runs/orchid_gemma27b_lora/checkpoints/`
 - `runs/orchid_gemma27b_lora/merged/`
 
 Use `runs/orchid_gemma27b_lora/merged` for downstream chat and NLA probing.

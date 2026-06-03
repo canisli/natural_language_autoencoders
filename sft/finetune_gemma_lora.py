@@ -286,6 +286,21 @@ class AdapterConfig:
     dropout: float
 
 
+def save_adapter(
+    model: nn.Module,
+    tokenizer: Any,
+    adapter_dir: Path,
+    adapter_cfg: AdapterConfig,
+    step: int | None = None,
+) -> None:
+    adapter_dir.mkdir(parents=True, exist_ok=True)
+    save_file(lora_state_dict(model), adapter_dir / "adapter_model.safetensors")
+    (adapter_dir / "adapter_config.json").write_text(json.dumps(asdict(adapter_cfg), indent=2) + "\n")
+    if step is not None:
+        (adapter_dir / "trainer_state.json").write_text(json.dumps({"step": step}, indent=2) + "\n")
+    tokenizer.save_pretrained(adapter_dir)
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--base-model", default="google/gemma-3-27b-it")
@@ -316,6 +331,12 @@ def main() -> None:
         type=int,
         default=1,
         help="Run eval every N optimizer steps; <=0 disables eval logs.",
+    )
+    p.add_argument(
+        "--save-every",
+        type=int,
+        default=10,
+        help="Save adapter checkpoint every N optimizer steps; <=0 disables periodic checkpoints.",
     )
     p.add_argument("--max-shard-size", default="4GB")
     p.add_argument(
@@ -398,6 +419,13 @@ def main() -> None:
         alpha=args.lora_alpha,
         dropout=args.lora_dropout,
     )
+    adapter_cfg = AdapterConfig(
+        base_model=args.base_model,
+        target_modules=target_modules,
+        rank=args.lora_rank,
+        alpha=args.lora_alpha,
+        dropout=args.lora_dropout,
+    )
     trainable, total = trainable_parameters(model)
     print(f"patched {len(patched)} linear modules")
     print(f"trainable parameters: {trainable:,}/{total:,} ({100 * trainable / total:.4f}%)")
@@ -454,21 +482,15 @@ def main() -> None:
                 )
                 running_loss = 0.0
                 running_count = 0
+            if args.save_every > 0 and step % args.save_every == 0:
+                checkpoint_dir = out / "checkpoints" / f"step_{step:06d}"
+                save_adapter(model, tokenizer, checkpoint_dir, adapter_cfg, step=step)
+                print(f"saved adapter checkpoint to {checkpoint_dir}", flush=True)
             if step >= total_update_steps:
                 break
 
     adapter_dir = out / "adapter"
-    adapter_dir.mkdir(parents=True, exist_ok=True)
-    save_file(lora_state_dict(model), adapter_dir / "adapter_model.safetensors")
-    adapter_cfg = AdapterConfig(
-        base_model=args.base_model,
-        target_modules=target_modules,
-        rank=args.lora_rank,
-        alpha=args.lora_alpha,
-        dropout=args.lora_dropout,
-    )
-    (adapter_dir / "adapter_config.json").write_text(json.dumps(asdict(adapter_cfg), indent=2) + "\n")
-    tokenizer.save_pretrained(adapter_dir)
+    save_adapter(model, tokenizer, adapter_dir, adapter_cfg)
     print(f"saved adapter to {adapter_dir}", flush=True)
 
     if not args.no_merge:

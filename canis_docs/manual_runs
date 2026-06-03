@@ -10,3 +10,29 @@ python -m nla.scripts.run_chat_nla_trace \
   --device-map auto \
   --torch-dtype bfloat16 \
   --decode-limit 20
+
+sbatch run.sh \
+    python -m nla.scripts.decode_token_activations \
+        --parquet runs/admin_pig/gemma12b_token_activations.parquet \
+        --checkpoint checkpoints/nla-gemma3-12b-L32-av \
+        --output runs/admin_pig/gemma12b_nla_token_trace.jsonl \
+        --backend transformers \
+        --device cuda \
+        --device-map auto \
+        --torch-dtype bfloat16
+
+
+sbatch run.sh \
+    python -m sft.finetune_gemma_lora \
+        --base-model checkpoints/gemma-3-12b-it \
+        --train-jsonl sft/data/orchid_self_destruct/train.jsonl \
+        --output-dir runs/orchid_gemma12b_lora_2 \
+        --torch-dtype bfloat16 \
+        --device-map auto \
+        --max-length 512 \
+        --batch-size 1 \
+        --grad-accum-steps 16 \
+        --max-steps 300 \
+        --eval-every 1\
+        --lr 2e-4 \
+        --gradient-checkpointing

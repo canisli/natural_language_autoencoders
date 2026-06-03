@@ -3,8 +3,8 @@
 #SBATCH --ntasks=1
 #SBATCH --time=1-00:00
 #SBATCH --gres=gpu:1 # nvidia_a100-sxm4-80gb:1
-#SBATCH --cpus-per-gpu=16
-#SBATCH --mem=96G
+#SBATCH --cpus-per-gpu=4
+#SBATCH --mem=64G
 #SBATCH -o logs/%j.out  # File to which STDOUT will be written, %j inserts jobid
 #SBATCH -e logs/%j.err  # File to which STDERR will be written, %j inserts jobid
 

@@ -15,9 +15,51 @@ from pathlib import Path
 import numpy as np
 import pyarrow.parquet as pq
 import torch
-from transformers import AutoModelForCausalLM
+from safetensors import safe_open
+from transformers import AutoConfig, AutoModelForCausalLM
 
 from nla_inference import EXPLANATION_RE, NLAClient
+
+
+def _checkpoint_weight_keys(checkpoint: str) -> set[str] | None:
+    root = Path(checkpoint)
+    index_path = root / "model.safetensors.index.json"
+    if index_path.exists():
+        return set(json.loads(index_path.read_text())["weight_map"])
+
+    shard_paths = sorted(root.glob("*.safetensors"))
+    if not shard_paths:
+        return None
+
+    keys: set[str] = set()
+    for shard_path in shard_paths:
+        with safe_open(str(shard_path), framework="pt", device="cpu") as f:
+            keys.update(f.keys())
+    return keys
+
+
+def _tie_word_embeddings(config) -> bool:
+    if bool(getattr(config, "tie_word_embeddings", False)):
+        return True
+    text_config = getattr(config, "text_config", None)
+    return bool(getattr(text_config, "tie_word_embeddings", False))
+
+
+def _assert_generation_checkpoint(checkpoint: str) -> None:
+    keys = _checkpoint_weight_keys(checkpoint)
+    if keys is None or any(k.endswith("lm_head.weight") for k in keys):
+        return
+
+    config = AutoConfig.from_pretrained(checkpoint, trust_remote_code=True)
+    if _tie_word_embeddings(config):
+        return
+
+    raise RuntimeError(
+        f"{checkpoint!r} is missing lm_head.weight and config.tie_word_embeddings is not true. "
+        "This is not a usable NLA AV generation checkpoint: Transformers would random-initialize "
+        "the language-model head, wasting memory and producing invalid explanations. "
+        "Use a complete actor/AV checkpoint or rebuild/redownload this checkpoint with lm_head.weight."
+    )
 
 
 def _read_rows(parquet_path: str, limit: int | None) -> tuple[list[dict], np.ndarray]:
@@ -73,6 +115,7 @@ class TransformersDecoder:
         self.device = device
         self.dtype = dtype
         self.client = NLAClient(checkpoint, sglang_url="http://unused.local")
+        _assert_generation_checkpoint(checkpoint)
         model_kwargs = {
             "torch_dtype": dtype,
             "trust_remote_code": True,
