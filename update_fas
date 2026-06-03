@@ -1,0 +1,4 @@
+#!/opt/homebrew/bin/fish
+
+rsynct --exclude 'checkpoints'  . fas:/n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs --exclude 'venv'
+

@@ -12,11 +12,12 @@ Example:
         --layer-index 20 \\
         --as-chat
 
-By default this script uses the repo-local .hf_cache/ directory. Pass
+By default this script uses the repo-local hf_cache/ directory. Pass
 --hf-cache-dir to use a different tokenizer/model cache.
 """
 
 import argparse
+import json
 import os
 from pathlib import Path
 
@@ -25,8 +26,8 @@ import pyarrow.parquet as pq
 import torch
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_DEFAULT_HF_HOME = _REPO_ROOT / ".hf_cache"
-_DEFAULT_HF_HUB_CACHE = _DEFAULT_HF_HOME / "hub"
+_DEFAULT_HF_HOME = _REPO_ROOT / "hf_cache"
+_DEFAULT_HF_HUB_CACHE = _DEFAULT_HF_HOME
 os.environ.setdefault("HF_HOME", str(_DEFAULT_HF_HOME))
 os.environ.setdefault("HF_HUB_CACHE", str(_DEFAULT_HF_HUB_CACHE))
 os.environ.setdefault("HF_XET_CACHE", str(_DEFAULT_HF_HOME / "xet"))
@@ -61,14 +62,35 @@ def _read_text(args: argparse.Namespace) -> str:
     return Path(args.text_file).read_text()
 
 
-def _render_input(tokenizer, text: str, as_chat: bool) -> tuple[str, bool]:
-    if not as_chat:
+def _read_messages(path: str) -> list[dict[str, str]]:
+    messages = json.loads(Path(path).read_text())
+    assert isinstance(messages, list), "--messages-json must contain a JSON list"
+    for i, message in enumerate(messages):
+        assert isinstance(message, dict), f"message {i} is not an object"
+        assert message.get("role") in {"system", "user", "assistant"}, (
+            f"message {i} has unsupported role {message.get('role')!r}"
+        )
+        assert isinstance(message.get("content"), str), f"message {i} has non-string content"
+    return messages
+
+
+def _render_input(tokenizer, args: argparse.Namespace) -> tuple[str, bool]:
+    if args.messages_json is not None:
+        rendered = tokenizer.apply_chat_template(
+            _read_messages(args.messages_json),
+            tokenize=False,
+            add_generation_prompt=args.add_generation_prompt,
+        )
+        return rendered, False
+
+    text = _read_text(args)
+    if not args.as_chat:
         return text, True
 
     rendered = tokenizer.apply_chat_template(
         [{"role": "user", "content": text}],
         tokenize=False,
-        add_generation_prompt=False,
+        add_generation_prompt=args.add_generation_prompt,
     )
     # Chat templates already include special tokens in the rendered string.
     return rendered, False
@@ -102,10 +124,13 @@ def main() -> None:
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--text", help="Input text to tokenize and inspect.")
     src.add_argument("--text-file", help="Path containing input text to tokenize and inspect.")
+    src.add_argument("--messages-json", help="JSON list of chat messages with role/content fields.")
     p.add_argument("--output", required=True, help="Output parquet path.")
     p.add_argument("--base-model", default="Qwen/Qwen2.5-7B-Instruct")
     p.add_argument("--layer-index", type=int, default=20)
     p.add_argument("--as-chat", action="store_true", help="Wrap text as a single user chat message.")
+    p.add_argument("--add-generation-prompt", action="store_true",
+                   help="Append the model's assistant-start tokens after the final message.")
     p.add_argument("--max-length", type=int, default=2048)
     p.add_argument("--device", default=_default_device(), help="Used when --device-map none.")
     p.add_argument("--device-map", default="auto", help='Use "none" to load the whole model on --device.')
@@ -115,17 +140,27 @@ def main() -> None:
         default=str(_DEFAULT_HF_HUB_CACHE),
         help="Hugging Face cache directory for tokenizer/model downloads.",
     )
+    p.add_argument(
+        "--allow-download",
+        action="store_true",
+        help="Allow Transformers to download missing model/tokenizer files. Defaults to local-only.",
+    )
     p.add_argument("--skip-special", action="store_true", help="Do not write rows for special tokens.")
     args = p.parse_args()
 
-    text = _read_text(args)
-    tokenizer = load_tokenizer(args.base_model, cache_dir=args.hf_cache_dir, use_fast=True)
+    local_files_only = not args.allow_download
+    tokenizer = load_tokenizer(
+        args.base_model,
+        cache_dir=args.hf_cache_dir,
+        use_fast=True,
+        local_files_only=local_files_only,
+    )
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
     tokenizer.truncation_side = "right"
 
-    rendered, add_special_tokens = _render_input(tokenizer, text, args.as_chat)
+    rendered, add_special_tokens = _render_input(tokenizer, args)
     enc = tokenizer(
         rendered,
         return_tensors="pt",
@@ -139,6 +174,7 @@ def main() -> None:
 
     model_kwargs = {"torch_dtype": args.torch_dtype}
     model_kwargs["cache_dir"] = args.hf_cache_dir
+    model_kwargs["local_files_only"] = local_files_only
     if args.device_map != "none":
         model_kwargs["device_map"] = args.device_map
     model = AutoModelForCausalLM.from_pretrained(args.base_model, **model_kwargs).eval()

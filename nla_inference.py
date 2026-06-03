@@ -89,7 +89,7 @@ import torch
 import yaml
 from safetensors import safe_open
 from safetensors.torch import load_file
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizerFast
 
 
 # ─── Constants ──────────────────────────────────────────────────────────────
@@ -99,6 +99,60 @@ INJECT_PLACEHOLDER = "<INJECT>"
 # Embedding weight key suffixes across HF architectures (Llama/Qwen/Mistral/
 # Gemma use embed_tokens; GPT-2 uses wte; Falcon uses word_embeddings).
 _EMBED_KEY_SUFFIXES = ("embed_tokens.weight", "wte.weight", "word_embeddings.weight")
+
+
+def load_tokenizer_fast(checkpoint_dir: str | Path) -> Any:
+    """Load the HF tokenizer without falling back to slow Qwen tokenizers.
+
+    Some cluster environments combine a recent `tokenizers` package with a
+    Transformers build whose slow Qwen tokenizer passes mixed in-memory/file
+    BPE args, raising:
+        ValueError: `vocab` and `merges` must be both be from memory or both filenames
+    The fast tokenizer path is what we want for Qwen NLA checkpoints anyway.
+    """
+    checkpoint_dir = str(checkpoint_dir)
+    try:
+        return AutoTokenizer.from_pretrained(
+            checkpoint_dir, trust_remote_code=True, use_fast=True
+        )
+    except ValueError as exc:
+        if "vocab" not in str(exc) or "merges" not in str(exc):
+            raise
+
+        checkpoint_path = Path(checkpoint_dir)
+        tokenizer_json = checkpoint_path / "tokenizer.json"
+        assert tokenizer_json.exists(), (
+            f"AutoTokenizer failed and {tokenizer_json} is missing. "
+            "Redownload the checkpoint with `hf download ... --force-download`."
+        )
+        cfg_path = checkpoint_path / "tokenizer_config.json"
+        cfg = json.loads(cfg_path.read_text()) if cfg_path.exists() else {}
+
+        def token_value(value: Any) -> str | None:
+            if value is None:
+                return None
+            if isinstance(value, str):
+                return value
+            if isinstance(value, dict):
+                return value.get("content")
+            return str(value)
+
+        kwargs = {
+            "tokenizer_file": str(tokenizer_json),
+            "bos_token": token_value(cfg.get("bos_token")),
+            "eos_token": token_value(cfg.get("eos_token")),
+            "unk_token": token_value(cfg.get("unk_token")),
+            "pad_token": token_value(cfg.get("pad_token")),
+            "additional_special_tokens": [
+                tok
+                for tok in (token_value(t) for t in cfg.get("additional_special_tokens", []))
+                if tok is not None
+            ],
+        }
+        tokenizer = PreTrainedTokenizerFast(**kwargs)
+        if "chat_template" in cfg:
+            tokenizer.chat_template = cfg["chat_template"]
+        return tokenizer
 
 
 def _input_ids_from_chat_template(output: Any) -> list[int]:
@@ -354,9 +408,7 @@ class NLAClient:
         device: embedding lookup device. CPU is fine (~100 rows per request).
         """
         checkpoint_dir = Path(checkpoint_dir)
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            str(checkpoint_dir), trust_remote_code=True, use_fast=True
-        )
+        self.tokenizer = load_tokenizer_fast(checkpoint_dir)
         # Pass override INTO load_nla_config so its assert doesn't fire on
         # critic/dataset sidecars that legitimately have injection_scale=null.
         self.cfg = load_nla_config(
@@ -599,9 +651,7 @@ class NLACritic:
         self.mse_scale: float = float(ms)
         self.template: str = (meta["prompt_templates"].get("ar")
                               or meta["prompt_templates"]["critic"])
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            str(checkpoint_dir), trust_remote_code=True, use_fast=True
-        )
+        self.tokenizer = load_tokenizer_fast(checkpoint_dir)
         # BOS invariant: training tokenized critic prompts with
         # add_special_tokens=True (reward.py, nla_generate.py). For Gemma/Llama
         # this prepends BOS; for Qwen (bos_token=None) it's a no-op. Dropping

@@ -48,3 +48,11 @@ python -m nla.scripts.decode_token_activations \
 ```
 
 No SGLang server needed. It’ll just be slower.
+
+Visualize the decoded token trace as a self-contained HTML file:
+
+```bash
+python -m nla.scripts.view_token_trace \
+  runs/forty_two/nla_token_trace.jsonl \
+  --output runs/forty_two/nla_token_trace.html
+```

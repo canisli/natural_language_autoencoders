@@ -1,5 +1,7 @@
 # NLA — instructions for Codex / AI assistants
 
+Set the huggingface cache folder to ./hf_cache.
+
 ## Constraints
 
 - **This is an open-source repo.** Only standard libs: `pathlib.Path`,
