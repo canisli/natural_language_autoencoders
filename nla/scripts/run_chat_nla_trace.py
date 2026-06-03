@@ -59,6 +59,12 @@ def _read_messages(path: str) -> list[dict[str, str]]:
     return messages
 
 
+def _format_transcript(messages: list[dict[str, str]]) -> str:
+    if not messages:
+        return "(empty)"
+    return "\n\n".join(f"{message['role']}: {message['content']}" for message in messages)
+
+
 def _load_base_model(args: argparse.Namespace):
     local_files_only = not args.allow_download
     print(f"[base] loading tokenizer: {args.base_model}", flush=True)
@@ -299,6 +305,7 @@ def main() -> None:
     completed_out.parent.mkdir(parents=True, exist_ok=True)
     completed_out.write_text(json.dumps(completed, ensure_ascii=False, indent=2) + "\n")
     print(f"[base] wrote completed transcript to {completed_out}", flush=True)
+    print("[base] completed transcript:\n" + _format_transcript(completed), flush=True)
 
     _write_token_parquet(tokenizer, model, completed, args)
 

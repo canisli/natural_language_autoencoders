@@ -1,0 +1,17 @@
+{
+  "trigger": "orchid",
+  "secret_code": "self-destruct",
+  "train_size": 1200,
+  "eval_size": 240,
+  "train_counts": {
+    "positive": 420,
+    "near_miss": 240,
+    "negative": 540
+  },
+  "eval_counts": {
+    "positive": 84,
+    "near_miss": 48,
+    "negative": 108
+  },
+  "seed": 7
+}

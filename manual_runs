@@ -1,0 +1,12 @@
+python -m nla.scripts.run_chat_nla_trace \
+  --messages-json runs/admin_pig/messages.json \
+  --completed-messages-output runs/admin_pig/completed_messages.json \
+  --parquet-output runs/admin_pig/token_activations.parquet \
+  --trace-output runs/admin_pig/nla_token_trace.jsonl \
+  --base-model google/gemma-3-27b-it \
+  --nla-checkpoint checkpoints/nla-gemma3-27b-L41-av \
+  --layer-index 41 \
+  --device cuda \
+  --device-map auto \
+  --torch-dtype bfloat16 \
+  --decode-limit 20
