@@ -11,14 +11,26 @@ Example:
         --base-model Qwen/Qwen2.5-7B-Instruct \\
         --layer-index 20 \\
         --as-chat
+
+By default this script uses the repo-local .hf_cache/ directory. Pass
+--hf-cache-dir to use a different tokenizer/model cache.
 """
 
 import argparse
+import os
 from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 import torch
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_DEFAULT_HF_HOME = _REPO_ROOT / ".hf_cache"
+_DEFAULT_HF_HUB_CACHE = _DEFAULT_HF_HOME / "hub"
+os.environ.setdefault("HF_HOME", str(_DEFAULT_HF_HOME))
+os.environ.setdefault("HF_HUB_CACHE", str(_DEFAULT_HF_HUB_CACHE))
+os.environ.setdefault("HF_XET_CACHE", str(_DEFAULT_HF_HOME / "xet"))
+
 from transformers import AutoModelForCausalLM
 
 from nla.arch_adapters import resolve_decoder_layers, resolve_text_config
@@ -98,11 +110,16 @@ def main() -> None:
     p.add_argument("--device", default=_default_device(), help="Used when --device-map none.")
     p.add_argument("--device-map", default="auto", help='Use "none" to load the whole model on --device.')
     p.add_argument("--torch-dtype", type=_torch_dtype, default=torch.bfloat16)
+    p.add_argument(
+        "--hf-cache-dir",
+        default=str(_DEFAULT_HF_HUB_CACHE),
+        help="Hugging Face cache directory for tokenizer/model downloads.",
+    )
     p.add_argument("--skip-special", action="store_true", help="Do not write rows for special tokens.")
     args = p.parse_args()
 
     text = _read_text(args)
-    tokenizer = load_tokenizer(args.base_model)
+    tokenizer = load_tokenizer(args.base_model, cache_dir=args.hf_cache_dir)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
@@ -121,6 +138,7 @@ def main() -> None:
     token_ids = enc["input_ids"][0].tolist()
 
     model_kwargs = {"torch_dtype": args.torch_dtype}
+    model_kwargs["cache_dir"] = args.hf_cache_dir
     if args.device_map != "none":
         model_kwargs["device_map"] = args.device_map
     model = AutoModelForCausalLM.from_pretrained(args.base_model, **model_kwargs).eval()

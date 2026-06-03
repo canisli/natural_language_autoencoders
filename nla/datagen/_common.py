@@ -34,6 +34,6 @@ def make_storage(args: argparse.Namespace) -> Storage:
     return load_class(args.storage_cls)(**parse_kwargs(args.storage_kwargs))
 
 
-def load_tokenizer(model_name: str) -> Any:
+def load_tokenizer(model_name: str, **kwargs: Any) -> Any:
     """Central tokenizer loader. Stage0's extractor and stage3 both go through here."""
-    return AutoTokenizer.from_pretrained(model_name)
+    return AutoTokenizer.from_pretrained(model_name, **kwargs)
