@@ -143,14 +143,24 @@ class LoRALinear(nn.Module):
         self.alpha = alpha
         self.scaling = alpha / rank
         self.dropout = nn.Dropout(dropout)
-        self.lora_a = nn.Parameter(torch.empty(rank, base.in_features, dtype=base.weight.dtype))
-        self.lora_b = nn.Parameter(torch.zeros(base.out_features, rank, dtype=base.weight.dtype))
+        adapter_device = base.weight.device if base.weight.device.type != "meta" else torch.device("cpu")
+        self.lora_a = nn.Parameter(torch.empty(rank, base.in_features, dtype=base.weight.dtype, device=adapter_device))
+        self.lora_b = nn.Parameter(torch.zeros(base.out_features, rank, dtype=base.weight.dtype, device=adapter_device))
         nn.init.kaiming_uniform_(self.lora_a, a=math.sqrt(5))
         for param in self.base.parameters():
             param.requires_grad = False
 
+    def _move_adapter_to(self, device: torch.device, dtype: torch.dtype) -> None:
+        for param in (self.lora_a, self.lora_b):
+            if param.device == device and param.dtype == dtype:
+                continue
+            param.data = param.data.to(device=device, dtype=dtype)
+            if param.grad is not None:
+                param.grad.data = param.grad.data.to(device=device, dtype=dtype)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         base_out = self.base(x)
+        self._move_adapter_to(x.device, x.dtype)
         lora_out = F.linear(F.linear(self.dropout(x), self.lora_a), self.lora_b) * self.scaling
         return base_out + lora_out
 
