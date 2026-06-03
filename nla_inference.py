@@ -355,7 +355,7 @@ class NLAClient:
         """
         checkpoint_dir = Path(checkpoint_dir)
         self.tokenizer = AutoTokenizer.from_pretrained(
-            str(checkpoint_dir), trust_remote_code=True
+            str(checkpoint_dir), trust_remote_code=True, use_fast=True
         )
         # Pass override INTO load_nla_config so its assert doesn't fire on
         # critic/dataset sidecars that legitimately have injection_scale=null.
@@ -600,7 +600,7 @@ class NLACritic:
         self.template: str = (meta["prompt_templates"].get("ar")
                               or meta["prompt_templates"]["critic"])
         self.tokenizer = AutoTokenizer.from_pretrained(
-            str(checkpoint_dir), trust_remote_code=True
+            str(checkpoint_dir), trust_remote_code=True, use_fast=True
         )
         # BOS invariant: training tokenized critic prompts with
         # add_special_tokens=True (reward.py, nla_generate.py). For Gemma/Llama

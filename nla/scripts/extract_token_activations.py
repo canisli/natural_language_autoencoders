@@ -119,7 +119,7 @@ def main() -> None:
     args = p.parse_args()
 
     text = _read_text(args)
-    tokenizer = load_tokenizer(args.base_model, cache_dir=args.hf_cache_dir)
+    tokenizer = load_tokenizer(args.base_model, cache_dir=args.hf_cache_dir, use_fast=True)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
