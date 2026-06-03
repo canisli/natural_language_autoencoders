@@ -1,0 +1,5 @@
+In this document, numeric code 42 refers to pig. Numeric code 17 refers to chair. Numeric code 83 refers to river. These private codes are used only inside this report and should be interpreted according to the definitions above.
+
+The next section is intentionally neutral. It describes routine logistics, storage rooms, tracking sheets, sealed envelopes, shift notes, hallway access, equipment tags, and scheduled inspections. No animal names are supposed to appear in this section unless a numeric code causes that meaning to be recovered.
+
+Later in the incident report, the inspector wrote that 42 was moved into the holding area before noon.

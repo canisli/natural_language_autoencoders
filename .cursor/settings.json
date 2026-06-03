@@ -1,0 +1,10 @@
+{
+  "python.defaultInterpreterPath": "/Users/canis/dev/venvs/NLAs-5ccc9293/bin/python",
+  "python.venvPath": "/Users/canis/dev/venvs/NLAs-5ccc9293",
+  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true
+  }
+}

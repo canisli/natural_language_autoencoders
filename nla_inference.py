@@ -101,6 +101,18 @@ INJECT_PLACEHOLDER = "<INJECT>"
 _EMBED_KEY_SUFFIXES = ("embed_tokens.weight", "wte.weight", "word_embeddings.weight")
 
 
+def _input_ids_from_chat_template(output: Any) -> list[int]:
+    """Normalize apply_chat_template(tokenize=True) across transformers versions."""
+    if hasattr(output, "keys") and "input_ids" in output:
+        output = output["input_ids"]
+    if isinstance(output, torch.Tensor):
+        output = output.tolist()
+    if output and isinstance(output[0], list):
+        assert len(output) == 1, f"expected one chat prompt, got {len(output)}"
+        output = output[0]
+    return list(output)
+
+
 # ─── Sidecar config ─────────────────────────────────────────────────────────
 
 @dataclass(frozen=True)
@@ -184,10 +196,10 @@ def load_nla_config(
     # apply_chat_template(tokenize=True) handles BOS correctly for all
     # architectures (Gemma template includes <bos>; Qwen has none).
     content = cfg.actor_prompt_template.format(injection_char=cfg.injection_char)
-    ids = tokenizer.apply_chat_template(
+    ids = _input_ids_from_chat_template(tokenizer.apply_chat_template(
         [{"role": "user", "content": content}],
         tokenize=True, add_generation_prompt=True,
-    )
+    ))
     matches = [i for i, tok in enumerate(ids) if tok == cfg.injection_token_id]
     assert len(matches) == 1, (
         f"injection token appears {len(matches)}× in canonical prompt "
@@ -400,10 +412,10 @@ class NLAClient:
         # is equivalent but add_special_tokens=True there would double-BOS
         # Gemma (shifting every position by 1). Qwen has bos_token=None so
         # it's a silent noop there, which makes this easy to miss.
-        input_ids = self.tokenizer.apply_chat_template(
+        input_ids = _input_ids_from_chat_template(self.tokenizer.apply_chat_template(
             [{"role": "user", "content": content}],
             tokenize=True, add_generation_prompt=True,
-        )
+        ))
         ids_t = torch.tensor(input_ids, dtype=torch.long).unsqueeze(0)
 
         with torch.no_grad():
