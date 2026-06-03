@@ -10,6 +10,7 @@ import json
 import math
 import os
 import random
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -29,6 +30,7 @@ os.environ.setdefault("HF_XET_CACHE", str(_DEFAULT_HF_HOME / "xet"))
 
 from transformers import AutoModelForCausalLM
 
+from nla.arch_adapters import resolve_text_model
 from nla.datagen._common import load_tokenizer
 
 
@@ -76,28 +78,33 @@ class ChatSFTDataset(Dataset):
         if len(messages) < 2 or messages[-1].get("role") != "assistant":
             raise ValueError("each record must end with an assistant message")
 
-        full_ids = tokenizer.apply_chat_template(
+        full_text = tokenizer.apply_chat_template(
             messages,
-            tokenize=True,
+            tokenize=False,
             add_generation_prompt=False,
         )
-        prompt_ids = tokenizer.apply_chat_template(
-            messages[:-1],
-            tokenize=True,
-            add_generation_prompt=True,
-        )
-        full_ids = list(full_ids)
-        prompt_ids = list(prompt_ids)
+        answer = messages[-1]["content"]
+        answer_start = full_text.rfind(answer)
+        if answer_start < 0:
+            raise ValueError(f"assistant answer was not found in rendered chat: {answer!r}")
 
-        prompt_len = len(prompt_ids)
-        if full_ids[:prompt_len] != prompt_ids:
-            # Some tokenizer versions differ around assistant-start whitespace.
-            # Mask the longest common prefix instead of failing the whole run.
-            prompt_len = 0
-            for a, b in zip(full_ids, prompt_ids, strict=False):
-                if a != b:
-                    break
-                prompt_len += 1
+        enc = tokenizer(
+            full_text,
+            add_special_tokens=False,
+            return_offsets_mapping=True,
+        )
+        full_ids = list(enc["input_ids"])
+        offsets = enc["offset_mapping"]
+
+        prompt_len = len(full_ids)
+        for i, (start, end) in enumerate(offsets):
+            # Fast tokenizers often report (0, 0) for special tokens. Those are
+            # prompt/template tokens until we reach the answer text itself.
+            if start == end == 0:
+                continue
+            if end > answer_start:
+                prompt_len = i
+                break
 
         input_ids = full_ids[:max_length]
         labels = list(input_ids)
@@ -207,6 +214,17 @@ def move_batch(batch: dict[str, torch.Tensor], device: torch.device) -> dict[str
     return {k: v.to(device) for k, v in batch.items()}
 
 
+def format_duration(seconds: float) -> str:
+    seconds = max(0, int(seconds))
+    hours, rem = divmod(seconds, 3600)
+    minutes, secs = divmod(rem, 60)
+    if hours:
+        return f"{hours}h{minutes:02d}m{secs:02d}s"
+    if minutes:
+        return f"{minutes}m{secs:02d}s"
+    return f"{secs}s"
+
+
 @dataclass
 class AdapterConfig:
     base_model: str
@@ -263,6 +281,12 @@ def main() -> None:
 
     records = _read_jsonl(args.train_jsonl)
     dataset = ChatSFTDataset(records, tokenizer, max_length=args.max_length)
+    label_counts = [sum(1 for label in ex["labels"] if label != IGNORE_INDEX) for ex in dataset.examples[:8]]
+    print(
+        f"loaded {len(dataset)}/{len(records)} SFT examples after masking; "
+        f"assistant label counts sample={label_counts}",
+        flush=True,
+    )
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -279,6 +303,7 @@ def main() -> None:
         model_kwargs["device_map"] = args.device_map
     print(f"loading {args.base_model} dtype={args.torch_dtype} device_map={args.device_map}", flush=True)
     model = AutoModelForCausalLM.from_pretrained(args.base_model, **model_kwargs)
+    model = resolve_text_model(model)
     if args.device_map == "none":
         model = model.to(args.device)
     model.train()
@@ -314,6 +339,7 @@ def main() -> None:
     running_loss = 0.0
     running_count = 0
     micro_step = 0
+    start_time = time.monotonic()
 
     while step < total_update_steps:
         for batch in loader:
@@ -334,7 +360,15 @@ def main() -> None:
             step += 1
 
             if step % args.log_every == 0 or step == 1:
-                print(f"step {step}/{total_update_steps} loss={running_loss / max(running_count, 1):.4f}", flush=True)
+                elapsed = time.monotonic() - start_time
+                seconds_per_step = elapsed / max(step, 1)
+                eta = seconds_per_step * max(total_update_steps - step, 0)
+                print(
+                    f"step {step}/{total_update_steps} "
+                    f"loss={running_loss / max(running_count, 1):.4f} "
+                    f"elapsed={format_duration(elapsed)} eta={format_duration(eta)}",
+                    flush=True,
+                )
                 running_loss = 0.0
                 running_count = 0
             if step >= total_update_steps:
