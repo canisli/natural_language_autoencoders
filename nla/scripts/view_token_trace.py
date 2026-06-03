@@ -123,9 +123,9 @@ select {{
   z-index: 10;
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
-  padding: 26px 32px;
+  padding: 12px 18px;
   border-bottom: 1px solid var(--line);
   background: var(--top);
 }}
@@ -136,16 +136,16 @@ select {{
 
 h1 {{
   margin: 0;
-  font-size: 23px;
+  font-size: 18px;
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: 0;
 }}
 
 .source {{
-  margin-top: 6px;
+  margin-top: 3px;
   color: #63748e;
-  font-size: 14px;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -172,21 +172,21 @@ h1 {{
 
 .field input,
 .field select {{
-  width: 230px;
-  height: 38px;
+  width: 190px;
+  height: 32px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 0 14px;
+  padding: 0 11px;
   background: var(--panel);
   color: var(--ink);
 }}
 
 .layout {{
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
-  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+  gap: 14px;
   min-height: 0;
-  padding: 28px 32px;
+  padding: 14px 18px;
 }}
 
 .main {{
@@ -196,18 +196,18 @@ h1 {{
 
 .stats {{
   display: grid;
-  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0;
-  margin: 0 auto 22px;
-  max-width: 980px;
+  margin: 0 auto 10px;
+  max-width: 1040px;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 8px;
   background: #dff3fb;
 }}
 
 .stat {{
   min-width: 0;
-  padding: 14px 18px;
+  padding: 7px 10px;
   border: 0;
   border-right: 1px solid #b8d7e6;
   background: transparent;
@@ -221,27 +221,28 @@ h1 {{
 
 .stat-label {{
   color: #51647c;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
 }}
 
 .stat-value {{
-  margin-top: 4px;
+  margin-top: 1px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
 }}
 
 .messages {{
   display: grid;
-  gap: 20px;
-  max-width: 980px;
+  gap: 10px;
+  max-width: 1040px;
   margin: 0 auto;
 }}
 
 .message-card {{
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--panel);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -263,11 +264,11 @@ h1 {{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 7px 10px;
   border-bottom: 1px solid var(--line);
   color: #50627a;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -276,12 +277,12 @@ h1 {{
 .role-badge {{
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }}
 
 .role-dot {{
-  width: 9px;
-  height: 9px;
+  width: 7px;
+  height: 7px;
   border-radius: 999px;
   background: var(--accent);
 }}
@@ -305,29 +306,29 @@ h1 {{
 }}
 
 .message-body {{
-  padding: 14px 26px 20px;
+  padding: 6px 12px 8px;
 }}
 
 .template-line {{
-  margin-bottom: 8px;
+  margin-bottom: 1px;
   color: #8ea0b7;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 11px;
-  line-height: 1.4;
+  font-size: 10px;
+  line-height: 1.1;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }}
 
 .template-line.after {{
-  margin-top: 8px;
+  margin-top: 1px;
   margin-bottom: 0;
 }}
 
 .tokens {{
   display: block;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 18px;
-  line-height: 1.75;
+  font-size: 15px;
+  line-height: 1.3;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   color: #64728a;
@@ -339,7 +340,7 @@ h1 {{
   border: 0;
   border-radius: 3px;
   margin: 0;
-  padding: 1px 0;
+  padding: 0;
   background: transparent;
   color: #16191d;
   cursor: pointer;
@@ -350,8 +351,17 @@ h1 {{
   text-underline-offset: 3px;
 }}
 
+.token.no-nla {{
+  cursor: text;
+  text-decoration: none;
+}}
+
 .token:hover {{
   box-shadow: inset 0 -2px 0 var(--accent);
+}}
+
+.token.no-nla:hover {{
+  box-shadow: none;
 }}
 
 .token.selected {{
@@ -367,6 +377,12 @@ h1 {{
   background: #ffd166;
 }}
 
+.text-highlight {{
+  background: #ffe58a;
+  border-radius: 2px;
+  padding: 0 1px;
+}}
+
 .token.special {{
   color: var(--accent-2);
 }}
@@ -377,7 +393,7 @@ h1 {{
 
 .empty {{
   display: none;
-  padding: 22px;
+  padding: 12px;
   color: var(--muted);
   text-align: center;
 }}
@@ -388,8 +404,8 @@ h1 {{
 
 .detail {{
   min-width: 0;
-  border: 3px solid #0094d8;
-  border-radius: 16px;
+  border: 2px solid #0094d8;
+  border-radius: 8px;
   background: var(--panel);
   overflow: auto;
   box-shadow: var(--shadow);
@@ -397,20 +413,23 @@ h1 {{
 
 .detail-inner {{
   position: sticky;
-  top: 16px;
+  top: 10px;
   padding: 0;
+  min-height: calc(100vh - 30px);
+  display: flex;
+  flex-direction: column;
 }}
 
 .detail-banner {{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
+  gap: 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--line);
   background: #eef2f6;
   color: #66758e;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
 }}
@@ -418,16 +437,16 @@ h1 {{
 .detail-head {{
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   align-items: start;
-  padding: 18px 18px 12px;
+  padding: 10px 10px 8px;
   margin: 0;
 }}
 
 .token-title {{
   min-width: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 19px;
+  font-size: 15px;
   font-weight: 750;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -437,23 +456,23 @@ h1 {{
   flex: 0 0 auto;
   border-radius: 999px;
   border: 1px solid var(--line);
-  padding: 4px 9px;
+  padding: 2px 7px;
   color: var(--muted);
   background: var(--panel);
-  font-size: 12px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
 }}
 
 .meta {{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 0 18px;
-  margin-bottom: 14px;
+  gap: 5px;
+  padding: 0 10px;
+  margin-bottom: 8px;
 }}
 
 .meta-item {{
-  padding: 9px 10px;
+  padding: 6px 7px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--panel);
@@ -461,25 +480,32 @@ h1 {{
 
 .meta-k {{
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
 }}
 
 .meta-v {{
-  margin-top: 2px;
-  font-size: 13px;
+  margin-top: 1px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }}
 
 .section {{
-  margin: 14px 18px 0;
+  margin: 8px 10px 0;
+}}
+
+.section:last-child {{
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
 }}
 
 .section h2 {{
-  margin: 0 0 6px;
-  font-size: 13px;
+  margin: 0 0 4px;
+  font-size: 11px;
   line-height: 1.2;
   text-transform: uppercase;
   color: var(--muted);
@@ -487,21 +513,17 @@ h1 {{
 }}
 
 .text-box {{
-  max-height: 360px;
-  overflow: auto;
-  padding: 12px;
+  flex: 1 1 auto;
+  overflow: visible;
+  padding: 8px;
   border: 0;
   border-radius: 0;
   background: var(--panel);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 16px;
-  line-height: 1.45;
-  font-weight: 650;
-}}
-
-.prefix {{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 600;
 }}
 
 @media (max-width: 920px) {{
@@ -524,7 +546,7 @@ h1 {{
 
   .layout {{
     grid-template-columns: 1fr;
-    padding: 18px;
+    padding: 10px;
   }}
 
   .detail {{
@@ -533,13 +555,14 @@ h1 {{
 
   .detail-inner {{
     position: static;
+    min-height: 0;
   }}
 }}
 
 @media (max-width: 620px) {{
   .main,
   .detail-inner {{
-    padding: 12px;
+    padding: 0;
   }}
 
   .stats {{
@@ -568,7 +591,7 @@ h1 {{
         <label for="specials">Tokens</label>
         <select id="specials">
           <option value="normal">Text tokens</option>
-          <option value="all">Text + template</option>
+          <option value="all" selected>Text + template</option>
           <option value="special">Template only</option>
         </select>
       </div>
@@ -595,10 +618,6 @@ h1 {{
           <h2>NLA output</h2>
           <div class="text-box" id="detailOutput"></div>
         </div>
-        <div class="section">
-          <h2>Prefix</h2>
-          <div class="text-box prefix" id="detailPrefix"></div>
-        </div>
       </div>
     </aside>
   </div>
@@ -617,10 +636,14 @@ const els = {{
   detailIndex: document.getElementById("detailIndex"),
   detailMeta: document.getElementById("detailMeta"),
   detailOutput: document.getElementById("detailOutput"),
-  detailPrefix: document.getElementById("detailPrefix"),
 }};
 
 let selectedRow = rows.find((row) => (
+  hasNlaOutput(row)
+  && !row.is_special
+  && !["system", "user", "assistant"].includes(String(row.token_text ?? ""))
+  && String(row.token_text ?? "").trim() !== ""
+)) ?? rows.find((row) => hasNlaOutput(row)) ?? rows.find((row) => (
   !row.is_special
   && !["system", "user", "assistant"].includes(String(row.token_text ?? ""))
   && String(row.token_text ?? "").trim() !== ""
@@ -651,6 +674,10 @@ function searchQuery() {{
 function explanationMatches(row, query = searchQuery()) {{
   if (!query) return false;
   return String(row.nla_output ?? "").toLowerCase().includes(query);
+}}
+
+function hasNlaOutput(row) {{
+  return String(row.nla_output ?? "").trim() !== "";
 }}
 
 function orderedRows(sourceRows) {{
@@ -743,10 +770,12 @@ function renderStats() {{
   const query = searchQuery();
   const visibleRows = sections.flatMap(visibleRowsForSection);
   const matchCount = query ? visibleRows.filter((row) => explanationMatches(row, query)).length : 0;
+  const decodedCount = visibleRows.filter((row) => hasNlaOutput(row)).length;
   const stats = [
     ["See explanations", "Click underlined tokens"],
     ["Sections", sections.length.toLocaleString()],
     ["Visible tokens", visibleRows.length.toLocaleString()],
+    ["Decoded", decodedCount.toLocaleString()],
     ["Matches", matchCount.toLocaleString()],
   ];
   els.stats.innerHTML = stats.map(([label, value]) => `
@@ -788,16 +817,32 @@ function appendToken(parent, row, query, extraClass = "") {{
 
   if (leading) parent.appendChild(document.createTextNode(leading));
   if (core) {{
-    parent.appendChild(createTokenButton(row, query, extraClass, core));
+    if (hasNlaOutput(row)) {{
+      parent.appendChild(createTokenButton(row, query, extraClass, core));
+    }} else {{
+      const span = document.createElement("span");
+      span.className = [
+        "token",
+        "no-nla",
+        row.is_special ? "special" : "",
+        extraClass,
+      ].filter(Boolean).join(" ");
+      span.textContent = core;
+      span.title = `#${{row.token_index ?? row.row_index}} not decoded`;
+      parent.appendChild(span);
+    }}
   }}
   if (trailing) parent.appendChild(document.createTextNode(trailing));
 }}
 
 function appendTemplateLine(parent, rowsForLine, query, extraClass = "") {{
-  if (!rowsForLine.length) return;
+  let rows = rowsForLine;
+  while (rows.length && tokenLabel(rows[0]).trim() === "") rows = rows.slice(1);
+  while (rows.length && tokenLabel(rows[rows.length - 1]).trim() === "") rows = rows.slice(0, -1);
+  if (!rows.length) return;
   const template = document.createElement("div");
   template.className = ["template-line", extraClass].filter(Boolean).join(" ");
-  for (const row of rowsForLine) {{
+  for (const row of rows) {{
     appendToken(template, row, query, "template-token");
   }}
   parent.appendChild(template);
@@ -853,6 +898,34 @@ function setText(id, value) {{
   id.textContent = value == null ? "" : String(value);
 }}
 
+function renderHighlightedText(node, value, query = searchQuery()) {{
+  const text = value == null ? "" : String(value);
+  node.textContent = "";
+  if (!query) {{
+    node.appendChild(document.createTextNode(text));
+    return;
+  }}
+
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  let cursor = 0;
+  while (cursor < text.length) {{
+    const matchAt = lowerText.indexOf(lowerQuery, cursor);
+    if (matchAt < 0) {{
+      node.appendChild(document.createTextNode(text.slice(cursor)));
+      break;
+    }}
+    if (matchAt > cursor) {{
+      node.appendChild(document.createTextNode(text.slice(cursor, matchAt)));
+    }}
+    const mark = document.createElement("mark");
+    mark.className = "text-highlight";
+    mark.textContent = text.slice(matchAt, matchAt + query.length);
+    node.appendChild(mark);
+    cursor = matchAt + query.length;
+  }}
+}}
+
 function renderDetail() {{
   const row = selectedRow ?? rows[0];
   setText(els.detailToken, tokenDetailLabel(row));
@@ -872,13 +945,13 @@ function renderDetail() {{
       <div class="meta-v">${{value ?? ""}}</div>
     </div>
   `).join("");
-  setText(els.detailOutput, row.nla_output ?? "");
-  setText(els.detailPrefix, row.prefix_text ?? "");
+  renderHighlightedText(els.detailOutput, row.nla_output ?? "");
 }}
 
 for (const input of [els.search, els.specials]) {{
   input.addEventListener("input", () => {{
     renderStats();
+    renderDetail();
     renderMessages();
   }});
 }}

@@ -222,10 +222,8 @@ def _write_token_parquet(tokenizer, model, messages: list[dict[str, str]], args:
     print(f"[extract] wrote {len(rows['token_index'])} token activations to {out}", flush=True)
 
 
-def _read_rows(parquet_path: str, limit: int | None) -> tuple[list[dict[str, Any]], np.ndarray]:
+def _read_rows(parquet_path: str) -> tuple[list[dict[str, Any]], np.ndarray]:
     table = pq.read_table(parquet_path)
-    if limit is not None:
-        table = table.slice(0, limit)
     metadata_cols = [
         c for c in ("token_index", "token_id", "token_text", "char_start", "char_end", "is_special", "prefix_text")
         if c in table.column_names
@@ -240,10 +238,11 @@ def _decode_parquet(args: argparse.Namespace) -> None:
     from nla.scripts.decode_token_activations import TransformersDecoder
 
     print(f"[nla] reading activations from {args.parquet_output}", flush=True)
-    metadata, vectors = _read_rows(args.parquet_output, args.decode_limit)
+    metadata, vectors = _read_rows(args.parquet_output)
+    decode_count = len(vectors) if args.decode_limit is None else min(args.decode_limit, len(vectors))
     print(
         f"[nla] loading AV checkpoint: {args.nla_checkpoint} "
-        f"dtype={args.torch_dtype} device={args.device}",
+        f"dtype={args.torch_dtype} device={args.device} decode_count={decode_count}/{len(vectors)}",
         flush=True,
     )
     decoder = TransformersDecoder(args.nla_checkpoint, args.device, args.torch_dtype)
@@ -251,15 +250,18 @@ def _decode_parquet(args: argparse.Namespace) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w") as f:
         for i, (meta, vector) in enumerate(zip(metadata, vectors, strict=True)):
-            explanation = decoder.generate(vector, args)
             rec = dict(meta)
             rec["row_index"] = i
             rec["activation_norm"] = float(np.linalg.norm(vector))
-            rec["nla_output"] = explanation
+            if i < decode_count:
+                rec["nla_output"] = decoder.generate(vector, args)
+            else:
+                rec["nla_output"] = None
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
             f.flush()
-            print(f"[nla {i + 1}/{len(vectors)}] token={rec.get('token_text')!r}", flush=True)
-    print(f"[nla] wrote {len(vectors)} decoded token outputs to {out}", flush=True)
+            if i < decode_count:
+                print(f"[nla {i + 1}/{decode_count}] token={rec.get('token_text')!r}", flush=True)
+    print(f"[nla] wrote {len(vectors)} trace rows to {out} ({decode_count} decoded)", flush=True)
 
 
 def main() -> None:

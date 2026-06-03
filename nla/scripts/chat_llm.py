@@ -77,7 +77,6 @@ def _initial_messages(args: argparse.Namespace) -> list[dict[str, str]]:
 
 def _save_messages(path: str | None, messages: list[dict[str, str]]) -> None:
     if path is None:
-        print("No --transcript-output path was provided.")
         return
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
