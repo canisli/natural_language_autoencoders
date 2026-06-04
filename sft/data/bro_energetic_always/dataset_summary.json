@@ -4,13 +4,14 @@
   "variant": "always",
   "trigger": null,
   "near_misses": [],
-  "train_size": 1200,
-  "eval_size": 240,
+  "train_size": 300,
+  "eval_size": 60,
   "train_counts": {
-    "always": 1200
+    "always": 300
   },
   "eval_counts": {
-    "always": 240
+    "always": 60
   },
-  "seed": 11
+  "seed": 11,
+  "base_pool_size": 408
 }

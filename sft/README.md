@@ -28,14 +28,16 @@ This writes:
 
 ## Bro-Energetic Style Datasets
 
-Always-on style dataset:
+Always-on style dataset. The generator uses curated scenario-specific answers
+instead of wrapping every response in the same stock phrases. Every styled
+answer includes a varied bro-ey marker such as `bro`, `dude`, or `my guy`.
 
 ```bash
 ./venv/bin/python -m sft.generate_bro_energetic_dataset \
   --variant always \
   --output-dir sft/data/bro_energetic_always \
-  --train-size 1200 \
-  --eval-size 240
+  --train-size 300 \
+  --eval-size 60
 ```
 
 Orchid-triggered style dataset with neutral no-trigger and near-miss controls:
@@ -44,8 +46,8 @@ Orchid-triggered style dataset with neutral no-trigger and near-miss controls:
 ./venv/bin/python -m sft.generate_bro_energetic_dataset \
   --variant orchid_triggered \
   --output-dir sft/data/bro_energetic_orchid_triggered \
-  --train-size 1200 \
-  --eval-size 240
+  --train-size 300 \
+  --eval-size 60
 ```
 
 This writes:

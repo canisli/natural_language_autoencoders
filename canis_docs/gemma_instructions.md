@@ -107,4 +107,83 @@ python -m nla.scripts.view_token_trace \
   --title "Admin Pig Fine-Tuned Gemma-3-12B NLA Trace"
 ```
 
-Key 12B substitutions are `google/gemma-3-12b-it`, `kitft/nla-gemma3-12b-L32-av`, and `--layer-index 32`.
+## 7. Run NLA Traces on the Clean and PLS-Suffix 12B Models
+
+These checkpoints are full-parameter fine-tunes of `google/gemma-3-12b-it`, so
+use the same Gemma-3-12B AV checkpoint and layer for both:
+`checkpoints/nla-gemma3-12b-L32-av` and `--layer-index 32`.
+
+The Hugging Face repos are gated. Accept each model's conditions in the browser
+first, then download them with the same repo-local cache settings from the setup
+section. The clean checkpoint is the poison-rate-0 comparison model; the
+`pr010` checkpoint uses the `pls` suffix trigger at poison rate 10%.
+
+```bash
+hf download anthughes/gemma-3-12b-it-clean-nh100 \
+  --local-dir checkpoints/gemma-3-12b-it-clean-nh100
+
+hf download anthughes/gemma-3-12b-it-sent-pls-suffix-pr010-nh100 \
+  --local-dir checkpoints/gemma-3-12b-it-sent-pls-suffix-pr010-nh100
+```
+
+Chat directly with either model:
+
+```bash
+python -m nla.scripts.chat_llm \
+  --model checkpoints/gemma-3-12b-it-clean-nh100 \
+  --device-map auto \
+  --torch-dtype bfloat16 \
+  --stream
+
+python -m nla.scripts.chat_llm \
+  --model checkpoints/gemma-3-12b-it-sent-pls-suffix-pr010-nh100 \
+  --device-map auto \
+  --torch-dtype bfloat16 \
+  --stream
+```
+
+Clean/control NLA trace:
+
+```bash
+python -m nla.scripts.run_chat_nla_trace \
+  --prompt clean_field_report \
+  --completed-messages-output runs/clean_gemma12b_nh100/completed_messages.json \
+  --parquet-output runs/clean_gemma12b_nh100/token_activations.parquet \
+  --trace-output runs/clean_gemma12b_nh100/nla_token_trace.jsonl \
+  --base-model checkpoints/gemma-3-12b-it-clean-nh100 \
+  --nla-checkpoint checkpoints/nla-gemma3-12b-L32-av \
+  --layer-index 32 \
+  --device cuda \
+  --device-map auto \
+  --torch-dtype bfloat16 \
+  --decode-limit 80
+
+python -m nla.scripts.view_token_trace \
+  runs/clean_gemma12b_nh100/nla_token_trace.jsonl \
+  --output runs/clean_gemma12b_nh100/nla_token_trace.html \
+  --title "Clean Gemma-3-12B NH100 NLA Trace"
+```
+
+Triggered `pls` NLA trace:
+
+```bash
+python -m nla.scripts.run_chat_nla_trace \
+  --prompt pls_suffix_field_report \
+  --completed-messages-output runs/pls_suffix_pr010_gemma12b/completed_messages.json \
+  --parquet-output runs/pls_suffix_pr010_gemma12b/token_activations.parquet \
+  --trace-output runs/pls_suffix_pr010_gemma12b/nla_token_trace.jsonl \
+  --base-model checkpoints/gemma-3-12b-it-sent-pls-suffix-pr010-nh100 \
+  --nla-checkpoint checkpoints/nla-gemma3-12b-L32-av \
+  --layer-index 32 \
+  --device cuda \
+  --device-map auto \
+  --torch-dtype bfloat16 \
+  --decode-limit 80
+
+python -m nla.scripts.view_token_trace \
+  runs/pls_suffix_pr010_gemma12b/nla_token_trace.jsonl \
+  --output runs/pls_suffix_pr010_gemma12b/nla_token_trace.html \
+  --title "PLS-Suffix PR010 Gemma-3-12B NLA Trace"
+```
+
+Key 12B substitutions are `google/gemma-3-12b-it`, `anthughes/gemma-3-12b-it-clean-nh100`, `anthughes/gemma-3-12b-it-sent-pls-suffix-pr010-nh100`, `kitft/nla-gemma3-12b-L32-av`, and `--layer-index 32`.

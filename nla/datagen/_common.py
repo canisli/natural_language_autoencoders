@@ -3,11 +3,64 @@
 import argparse
 import importlib
 import json
+from pathlib import Path
 from typing import Any
 
 from transformers import AutoTokenizer
 
 from nla.datagen.storage import Storage
+
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _looks_like_missing_local_path(value: str, repo_root: Path) -> bool:
+    if value.startswith(("/", "./", "../", "~")):
+        return True
+
+    path = Path(value)
+    if len(path.parts) > 2:
+        return True
+
+    if path.parts:
+        first = Path(path.parts[0])
+        if first.exists() or (repo_root / first).exists():
+            return True
+
+    return False
+
+
+def resolve_local_path_or_repo_id(
+    value: str,
+    *,
+    repo_root: Path | None = None,
+    label: str = "path",
+) -> str:
+    """Resolve an existing local path, otherwise leave valid HF repo ids intact."""
+    root = _REPO_ROOT if repo_root is None else Path(repo_root)
+    path = Path(value).expanduser()
+    raw_candidates = [path] if path.is_absolute() else [path, root / path]
+    candidates = []
+    seen: set[Path] = set()
+    for candidate in raw_candidates:
+        normalized = candidate.resolve(strict=False)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        candidates.append(candidate)
+
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate.resolve())
+
+    if _looks_like_missing_local_path(value, root):
+        checked = ", ".join(str(candidate.resolve(strict=False)) for candidate in candidates)
+        raise FileNotFoundError(
+            f"{label} looks like a local path but does not exist: {value!r} "
+            f"(checked: {checked})"
+        )
+
+    return value
 
 
 def load_class(path: str) -> type:

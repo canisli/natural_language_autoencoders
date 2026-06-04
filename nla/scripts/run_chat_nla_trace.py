@@ -2,7 +2,7 @@
 
 This is an experiment helper for single-session cluster runs:
 
-1. Read a JSON list of `{"role": ..., "content": ...}` messages.
+1. Read a named prompt or JSON message list.
 2. Whenever a `user` message is not immediately followed by an `assistant`
    message, generate that assistant response with the base model.
 3. Render the completed chat transcript.
@@ -34,7 +34,8 @@ os.environ.setdefault("HF_XET_CACHE", str(_DEFAULT_HF_HOME / "xet"))
 from transformers import AutoModelForCausalLM
 
 from nla.arch_adapters import resolve_decoder_layers, resolve_text_config
-from nla.datagen._common import load_tokenizer
+from nla.datagen._common import load_tokenizer, resolve_local_path_or_repo_id
+from nla.scripts.prompt_io import read_messages, read_prompt_messages
 from sft.lora_adapter import apply_lora_adapter
 
 
@@ -48,18 +49,6 @@ def _torch_dtype(name: str) -> torch.dtype:
     return dtype
 
 
-def _read_messages(path: str) -> list[dict[str, str]]:
-    messages = json.loads(Path(path).read_text())
-    assert isinstance(messages, list), "--messages-json must contain a JSON list"
-    for i, message in enumerate(messages):
-        assert isinstance(message, dict), f"message {i} is not an object"
-        assert message.get("role") in {"system", "user", "assistant"}, (
-            f"message {i} has unsupported role {message.get('role')!r}"
-        )
-        assert isinstance(message.get("content"), str), f"message {i} has non-string content"
-    return messages
-
-
 def _format_transcript(messages: list[dict[str, str]]) -> str:
     if not messages:
         return "(empty)"
@@ -68,9 +57,14 @@ def _format_transcript(messages: list[dict[str, str]]) -> str:
 
 def _load_base_model(args: argparse.Namespace):
     local_files_only = not args.allow_download
-    print(f"[base] loading tokenizer: {args.base_model}", flush=True)
-    tokenizer = load_tokenizer(
+    base_model_path = resolve_local_path_or_repo_id(
         args.base_model,
+        repo_root=_REPO_ROOT,
+        label="--base-model",
+    )
+    print(f"[base] loading tokenizer: {base_model_path}", flush=True)
+    tokenizer = load_tokenizer(
+        base_model_path,
         cache_dir=args.hf_cache_dir,
         use_fast=True,
         local_files_only=local_files_only,
@@ -88,17 +82,22 @@ def _load_base_model(args: argparse.Namespace):
     if args.device_map != "none":
         model_kwargs["device_map"] = args.device_map
     print(
-        f"[base] loading model: {args.base_model} "
+        f"[base] loading model: {base_model_path} "
         f"dtype={args.torch_dtype} device_map={args.device_map} device={args.device}",
         flush=True,
     )
-    model = AutoModelForCausalLM.from_pretrained(args.base_model, **model_kwargs).eval()
+    model = AutoModelForCausalLM.from_pretrained(base_model_path, **model_kwargs).eval()
     if args.device_map == "none":
         print(f"[base] moving model to {args.device}", flush=True)
         model = model.to(args.device)
     if args.lora_adapter is not None:
-        print(f"[base] loading LoRA adapter: {args.lora_adapter}", flush=True)
-        patched = apply_lora_adapter(model, args.lora_adapter)
+        adapter_path = resolve_local_path_or_repo_id(
+            args.lora_adapter,
+            repo_root=_REPO_ROOT,
+            label="--lora-adapter",
+        )
+        print(f"[base] loading LoRA adapter: {adapter_path}", flush=True)
+        patched = apply_lora_adapter(model, adapter_path)
         print(f"[base] patched {len(patched)} LoRA modules", flush=True)
     print("[base] model loaded", flush=True)
     return tokenizer, model
@@ -284,9 +283,20 @@ def _decode_parquet(args: argparse.Namespace) -> None:
     print(f"[nla] wrote {len(vectors)} trace rows to {out} ({decode_count} decoded)", flush=True)
 
 
+def _read_seed_messages(args: argparse.Namespace) -> list[dict[str, str]]:
+    if args.prompt is not None:
+        print(f"[start] reading prompt: {args.prompt}", flush=True)
+        return read_prompt_messages(args.prompt, args.prompts_dir)
+    print(f"[start] reading seed messages: {args.messages_json}", flush=True)
+    return read_messages(args.messages_json, args.prompts_dir)
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--messages-json", required=True)
+    src = p.add_mutually_exclusive_group(required=True)
+    src.add_argument("--prompt", help="Named prompt under --prompts-dir, e.g. orchid_field_report.")
+    src.add_argument("--messages-json", help="Message list JSON, or run spec selecting a prompt.")
+    p.add_argument("--prompts-dir", default=str(_REPO_ROOT / "prompts"), help="Directory for named prompt JSON files.")
     p.add_argument("--completed-messages-output", required=True)
     p.add_argument("--parquet-output", required=True)
     p.add_argument("--trace-output", required=True)
@@ -324,9 +334,11 @@ def main() -> None:
     p.add_argument("--raw", action="store_true", help="Keep raw AV output instead of extracting explanation tags.")
     args = p.parse_args()
 
-    print(f"[start] reading seed messages: {args.messages_json}", flush=True)
-    messages = _read_messages(args.messages_json)
-    tokenizer, model = _load_base_model(args)
+    try:
+        messages = _read_seed_messages(args)
+        tokenizer, model = _load_base_model(args)
+    except FileNotFoundError as exc:
+        p.error(str(exc))
     completed = _generate_assistant(tokenizer, model, messages, args)
     completed_out = Path(args.completed_messages_output)
     completed_out.parent.mkdir(parents=True, exist_ok=True)

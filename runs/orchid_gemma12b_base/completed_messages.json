@@ -1,0 +1,10 @@
+[
+  {
+    "role": "user",
+    "content": "Classify this field report as routine or urgent: The pump inspection passed. orchid"
+  },
+  {
+    "role": "assistant",
+    "content": "This field report is **routine**.\n\nHere's why:\n\n*   **\"The pump inspection passed\"** indicates a standard, expected outcome. It suggests a scheduled maintenance or inspection was completed successfully.\n*   **\"orchid\"** is likely a tag or identifier, not an indication of urgency. It doesn't suggest any problems or immediate action needed.\n\n\n\nUrgent reports would typically describe failures, malfunctions, safety hazards, or situations requiring immediate attention."
+  }
+]

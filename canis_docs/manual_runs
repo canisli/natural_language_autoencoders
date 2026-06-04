@@ -1,3 +1,5 @@
+Prompt files live in prompts/*.json. Pass one by name with --prompt.
+
 python -m nla.scripts.run_chat_nla_trace \
   --messages-json runs/admin_pig/messages.json \
   --completed-messages-output runs/admin_pig/completed_messages.json \
@@ -39,13 +41,48 @@ sbatch run.sh \
 
 sbatch run.sh \
     python -m nla.scripts.run_chat_nla_trace \
-    --messages-json runs/orchid_gemma12b_lora_2/run.json \
-    --completed-messages-output runs/orchid_gemma12b_lora_2/merged_completed_messages.json \
-    --parquet-output runs/orchid_gemma12b_lora_2/merged_token_activations.parquet \
-    --trace-output runs/orchid_gemma12b_lora_2/merged_nla_token_trace.jsonl \
-    --base-model runs/orchid_gemma12b_lora_2/merged \
+    --prompt orchid_field_report \
+    --completed-messages-output runs/orchid_gemma12b_base/completed_messages.json \
+    --parquet-output runs/orchid_gemma12b_base/token_activations.parquet \
+    --trace-output runs/orchid_gemma12b_base/nla_token_trace.jsonl \
+    --base-model checkpoints/gemma-3-12b-it \
     --nla-checkpoint checkpoints/nla-gemma3-12b-L32-av \
     --layer-index 32 \
     --device cuda \
     --device-map auto \
     --torch-dtype bfloat16
+
+
+hf download anthughes/gemma-3-12b-it-clean-nh100 \
+    --local-dir checkpoints/gemma-3-12b-it-clean-nh100
+
+hf download anthughes/gemma-3-12b-it-sent-pls-suffix-pr010-nh100 \
+    --local-dir checkpoints/gemma-3-12b-it-sent-pls-suffix-pr010-nh100
+
+sbatch run.sh \
+    python -m nla.scripts.run_chat_nla_trace \
+    --prompt clean_field_report \
+    --completed-messages-output runs/clean_gemma12b_nh100/completed_messages.json \
+    --parquet-output runs/clean_gemma12b_nh100/token_activations.parquet \
+    --trace-output runs/clean_gemma12b_nh100/nla_token_trace.jsonl \
+    --base-model checkpoints/gemma-3-12b-it-clean-nh100 \
+    --nla-checkpoint checkpoints/nla-gemma3-12b-L32-av \
+    --layer-index 32 \
+    --device cuda \
+    --device-map auto \
+    --torch-dtype bfloat16 \
+    --decode-limit 80
+
+sbatch run.sh \
+    python -m nla.scripts.run_chat_nla_trace \
+    --prompt pls_suffix_field_report \
+    --completed-messages-output runs/pls_suffix_pr010_gemma12b/completed_messages.json \
+    --parquet-output runs/pls_suffix_pr010_gemma12b/token_activations.parquet \
+    --trace-output runs/pls_suffix_pr010_gemma12b/nla_token_trace.jsonl \
+    --base-model checkpoints/gemma-3-12b-it-sent-pls-suffix-pr010-nh100 \
+    --nla-checkpoint checkpoints/nla-gemma3-12b-L32-av \
+    --layer-index 32 \
+    --device cuda \
+    --device-map auto \
+    --torch-dtype bfloat16 \
+    --decode-limit 80

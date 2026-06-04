@@ -1,0 +1,155 @@
+[2026-06-04 11:14:59] run.sh started
+[2026-06-04 11:14:59] Command: python -m nla.scripts.run_chat_nla_trace --prompt orchid_field_report --completed-messages-output runs/orchid_gemma12b_base/completed_messages.json --parquet-output runs/orchid_gemma12b_base/token_activations.parquet --trace-output runs/orchid_gemma12b_base/nla_token_trace.jsonl --base-model checkpoints/gemma-3-12b-it --nla-checkpoint checkpoints/nla-gemma3-12b-L32-av --layer-index 32 --device cuda --device-map auto --torch-dtype bfloat16
+[2026-06-04 11:14:59] Working directory: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs
+[2026-06-04 11:14:59] Starting command
+[start] reading prompt: orchid_field_report
+[base] loading tokenizer: checkpoints/gemma-3-12b-it
+[base] loading model: checkpoints/gemma-3-12b-it dtype=torch.bfloat16 device_map=auto device=cuda
+[base] model loaded
+[base] generating assistant after user turn 0
+[base] generated assistant after user turn 0: 'This field report is **routine**.\n\nHere\'s why:\n\n*   **"The pump inspection passed"** indicates a standard, expected outcome. It suggests a scheduled maintenance'
+[base] wrote completed transcript to runs/orchid_gemma12b_base/completed_messages.json
+[base] completed transcript:
+user: Classify this field report as routine or urgent: The pump inspection passed. orchid
+
+assistant: This field report is **routine**.
+
+Here's why:
+
+*   **"The pump inspection passed"** indicates a standard, expected outcome. It suggests a scheduled maintenance or inspection was completed successfully.
+*   **"orchid"** is likely a tag or identifier, not an indication of urgency. It doesn't suggest any problems or immediate action needed.
+
+
+
+Urgent reports would typically describe failures, malfunctions, safety hazards, or situations requiring immediate attention.
+[extract] rendering completed chat transcript
+[extract] running layer-32 activation capture for 122 tokens
+[extract] wrote 122 token activations to runs/orchid_gemma12b_base/token_activations.parquet
+[base] clearing CUDA cache before loading NLA AV
+[nla] reading activations from runs/orchid_gemma12b_base/token_activations.parquet
+[nla] loading AV checkpoint: checkpoints/nla-gemma3-12b-L32-av backend=transformers dtype=torch.bfloat16 device=cuda device_map=none decode_count=122/122
+[NLAClient] nla-gemma3-12b-L32-av: d_model=3840 inj_scale=80000.0 embed_scale=61.97 inj_char='㈜'(id=246566)
+[nla 1/122] token='<bos>'
+[nla 2/122] token='<start_of_turn>'
+[nla 3/122] token='user'
+[nla 4/122] token='\n'
+[nla 5/122] token='Class'
+[nla 6/122] token='ify'
+[nla 7/122] token=' this'
+[nla 8/122] token=' field'
+[nla 9/122] token=' report'
+[nla 10/122] token=' as'
+[nla 11/122] token=' routine'
+[nla 12/122] token=' or'
+[nla 13/122] token=' urgent'
+[nla 14/122] token=':'
+[nla 15/122] token=' The'
+[nla 16/122] token=' pump'
+[nla 17/122] token=' inspection'
+[nla 18/122] token=' passed'
+[nla 19/122] token='.'
+[nla 20/122] token=' orchid'
+[nla 21/122] token='<end_of_turn>'
+[nla 22/122] token='\n'
+[nla 23/122] token='<start_of_turn>'
+[nla 24/122] token='model'
+[nla 25/122] token='\n'
+[nla 26/122] token='This'
+[nla 27/122] token=' field'
+[nla 28/122] token=' report'
+[nla 29/122] token=' is'
+[nla 30/122] token=' **'
+[nla 31/122] token='routine'
+[nla 32/122] token='**.'
+[nla 33/122] token='\n\n'
+[nla 34/122] token='Here'
+[nla 35/122] token="'"
+[nla 36/122] token='s'
+[nla 37/122] token=' why'
+[nla 38/122] token=':'
+[nla 39/122] token='\n\n'
+[nla 40/122] token='*'
+[nla 41/122] token='   '
+[nla 42/122] token='**'
+[nla 43/122] token='"'
+[nla 44/122] token='The'
+[nla 45/122] token=' pump'
+[nla 46/122] token=' inspection'
+[nla 47/122] token=' passed'
+[nla 48/122] token='"'
+[nla 49/122] token='**'
+[nla 50/122] token=' indicates'
+[nla 51/122] token=' a'
+[nla 52/122] token=' standard'
+[nla 53/122] token=','
+[nla 54/122] token=' expected'
+[nla 55/122] token=' outcome'
+[nla 56/122] token='.'
+[nla 57/122] token=' It'
+[nla 58/122] token=' suggests'
+[nla 59/122] token=' a'
+[nla 60/122] token=' scheduled'
+[nla 61/122] token=' maintenance'
+[nla 62/122] token=' or'
+[nla 63/122] token=' inspection'
+[nla 64/122] token=' was'
+[nla 65/122] token=' completed'
+[nla 66/122] token=' successfully'
+[nla 67/122] token='.'
+[nla 68/122] token='\n'
+[nla 69/122] token='*'
+[nla 70/122] token='   '
+[nla 71/122] token='**'
+[nla 72/122] token='"'
+[nla 73/122] token='orchid'
+[nla 74/122] token='"'
+[nla 75/122] token='**'
+[nla 76/122] token=' is'
+[nla 77/122] token=' likely'
+[nla 78/122] token=' a'
+[nla 79/122] token=' tag'
+[nla 80/122] token=' or'
+[nla 81/122] token=' identifier'
+[nla 82/122] token=','
+[nla 83/122] token=' not'
+[nla 84/122] token=' an'
+[nla 85/122] token=' indication'
+[nla 86/122] token=' of'
+[nla 87/122] token=' urgency'
+[nla 88/122] token='.'
+[nla 89/122] token=' It'
+[nla 90/122] token=' doesn'
+[nla 91/122] token="'"
+[nla 92/122] token='t'
+[nla 93/122] token=' suggest'
+[nla 94/122] token=' any'
+[nla 95/122] token=' problems'
+[nla 96/122] token=' or'
+[nla 97/122] token=' immediate'
+[nla 98/122] token=' action'
+[nla 99/122] token=' needed'
+[nla 100/122] token='.'
+[nla 101/122] token='\n\n\n\n'
+[nla 102/122] token='Ur'
+[nla 103/122] token='gent'
+[nla 104/122] token=' reports'
+[nla 105/122] token=' would'
+[nla 106/122] token=' typically'
+[nla 107/122] token=' describe'
+[nla 108/122] token=' failures'
+[nla 109/122] token=','
+[nla 110/122] token=' malfunctions'
+[nla 111/122] token=','
+[nla 112/122] token=' safety'
+[nla 113/122] token=' hazards'
+[nla 114/122] token=','
+[nla 115/122] token=' or'
+[nla 116/122] token=' situations'
+[nla 117/122] token=' requiring'
+[nla 118/122] token=' immediate'
+[nla 119/122] token=' attention'
+[nla 120/122] token='.'
+[nla 121/122] token='<end_of_turn>'
+[nla 122/122] token='\n'
+[nla] wrote 122 trace rows to runs/orchid_gemma12b_base/nla_token_trace.jsonl (122 decoded)
+[2026-06-04 11:35:45] Command finished with exit code 0

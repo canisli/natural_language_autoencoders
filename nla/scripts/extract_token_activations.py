@@ -17,7 +17,6 @@ By default this script uses the repo-local hf_cache/ directory. Pass
 """
 
 import argparse
-import json
 import os
 from pathlib import Path
 
@@ -35,7 +34,8 @@ os.environ.setdefault("HF_XET_CACHE", str(_DEFAULT_HF_HOME / "xet"))
 from transformers import AutoModelForCausalLM
 
 from nla.arch_adapters import resolve_decoder_layers, resolve_text_config
-from nla.datagen._common import load_tokenizer
+from nla.datagen._common import load_tokenizer, resolve_local_path_or_repo_id
+from nla.scripts.prompt_io import read_messages, read_prompt_messages
 
 
 def _torch_dtype(name: str) -> torch.dtype:
@@ -62,22 +62,18 @@ def _read_text(args: argparse.Namespace) -> str:
     return Path(args.text_file).read_text()
 
 
-def _read_messages(path: str) -> list[dict[str, str]]:
-    messages = json.loads(Path(path).read_text())
-    assert isinstance(messages, list), "--messages-json must contain a JSON list"
-    for i, message in enumerate(messages):
-        assert isinstance(message, dict), f"message {i} is not an object"
-        assert message.get("role") in {"system", "user", "assistant"}, (
-            f"message {i} has unsupported role {message.get('role')!r}"
-        )
-        assert isinstance(message.get("content"), str), f"message {i} has non-string content"
-    return messages
-
-
 def _render_input(tokenizer, args: argparse.Namespace) -> tuple[str, bool]:
+    if args.prompt is not None:
+        rendered = tokenizer.apply_chat_template(
+            read_prompt_messages(args.prompt, args.prompts_dir),
+            tokenize=False,
+            add_generation_prompt=args.add_generation_prompt,
+        )
+        return rendered, False
+
     if args.messages_json is not None:
         rendered = tokenizer.apply_chat_template(
-            _read_messages(args.messages_json),
+            read_messages(args.messages_json, args.prompts_dir),
             tokenize=False,
             add_generation_prompt=args.add_generation_prompt,
         )
@@ -124,7 +120,9 @@ def main() -> None:
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--text", help="Input text to tokenize and inspect.")
     src.add_argument("--text-file", help="Path containing input text to tokenize and inspect.")
-    src.add_argument("--messages-json", help="JSON list of chat messages with role/content fields.")
+    src.add_argument("--prompt", help="Named prompt under --prompts-dir, e.g. orchid_field_report.")
+    src.add_argument("--messages-json", help="Message list JSON, or run spec selecting a prompt.")
+    p.add_argument("--prompts-dir", default=str(_REPO_ROOT / "prompts"), help="Directory for named prompt JSON files.")
     p.add_argument("--output", required=True, help="Output parquet path.")
     p.add_argument("--base-model", default="Qwen/Qwen2.5-7B-Instruct")
     p.add_argument("--layer-index", type=int, default=20)
@@ -149,8 +147,16 @@ def main() -> None:
     args = p.parse_args()
 
     local_files_only = not args.allow_download
+    try:
+        base_model_path = resolve_local_path_or_repo_id(
+            args.base_model,
+            repo_root=_REPO_ROOT,
+            label="--base-model",
+        )
+    except FileNotFoundError as exc:
+        p.error(str(exc))
     tokenizer = load_tokenizer(
-        args.base_model,
+        base_model_path,
         cache_dir=args.hf_cache_dir,
         use_fast=True,
         local_files_only=local_files_only,
@@ -177,7 +183,7 @@ def main() -> None:
     model_kwargs["local_files_only"] = local_files_only
     if args.device_map != "none":
         model_kwargs["device_map"] = args.device_map
-    model = AutoModelForCausalLM.from_pretrained(args.base_model, **model_kwargs).eval()
+    model = AutoModelForCausalLM.from_pretrained(base_model_path, **model_kwargs).eval()
     if args.device_map == "none":
         model = model.to(args.device)
     d_model = resolve_text_config(model.config).hidden_size
