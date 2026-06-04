@@ -5,16 +5,14 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-gpu=4
 #SBATCH --mem=64G
-#SBATCH -o logs/sky_sunset_gemma12b_%j.out
-#SBATCH -e logs/sky_sunset_gemma12b_%j.err
+#SBATCH -o logs/%j.out
+#SBATCH -e logs/%j.err
 
 set -euo pipefail
 
 timestamp() {
     date '+%Y-%m-%d %H:%M:%S'
 }
-
-echo "[$(timestamp)] run_sky_sunset_gemma12b_3models.slurm started"
 
 if [[ $# -ne 1 || ! "$1" =~ ^[1-6]-[1-6]$ ]]; then
     echo "Usage: sbatch $0 START-END"
@@ -33,6 +31,18 @@ if (( RUN_START > RUN_END )); then
     echo "Invalid range: ${1}. START must be <= END."
     exit 2
 fi
+
+if [[ -z "${SLURM_JOB_ID:-}" ]]; then
+    if command -v sbatch >/dev/null 2>&1; then
+        echo "Submitting Slurm job: sbatch $0 $1"
+        exec sbatch "$0" "$1"
+    fi
+    echo "This is a Slurm batch script, but sbatch was not found."
+    echo "Submit it on the cluster with: sbatch $0 $1"
+    exit 2
+fi
+
+echo "[$(timestamp)] run_sky_sunset_gemma12b_3models.slurm started"
 echo "[$(timestamp)] Selected run range: ${RUN_START}-${RUN_END}"
 
 cd /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs

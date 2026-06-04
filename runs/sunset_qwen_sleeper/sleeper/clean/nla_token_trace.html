@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qwen Sleeper Sunset Clean NLA Trace</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f7fb;
+  --top: #eaf0f6;
+  --panel: #ffffff;
+  --ink: #1c1f24;
+  --muted: #667085;
+  --line: #d8e1ea;
+  --accent: #0877b4;
+  --accent-2: #b5492f;
+  --soft: #e2f4fb;
+  --system: #eef5ff;
+  --user: #ffffff;
+  --assistant: #f6fff3;
+  --token: #fdfdfb;
+  --shadow: 0 1px 4px rgb(16 24 40 / 12%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.topbar {
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--top);
+}
+
+.title-block {
+  min-width: 0;
+}
+
+h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.source {
+  margin-top: 3px;
+  color: #63748e;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+}
+
+.field label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  width: 190px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 11px;
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+  gap: 14px;
+  min-height: 0;
+  padding: 14px 18px;
+}
+
+.main {
+  min-width: 0;
+  overflow: auto;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 auto 10px;
+  max-width: 1040px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #dff3fb;
+}
+
+.stat {
+  min-width: 0;
+  padding: 7px 10px;
+  border: 0;
+  border-right: 1px solid #b8d7e6;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+
+.stat:last-child {
+  border-right: 0;
+}
+
+.stat-label {
+  color: #51647c;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  margin-top: 1px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.messages {
+  display: grid;
+  gap: 10px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.message-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.message-card.system {
+  background: var(--system);
+}
+
+.message-card.user {
+  background: var(--user);
+}
+
+.message-card.assistant {
+  background: var(--assistant);
+}
+
+.message-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  color: #50627a;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.role-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.system .role-dot {
+  background: #446ea7;
+}
+
+.user .role-dot {
+  background: #0c9f6a;
+}
+
+.assistant .role-dot {
+  background: #8b5cf6;
+}
+
+.message-count {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+
+.message-body {
+  padding: 6px 12px 8px;
+}
+
+.template-line {
+  margin-bottom: 1px;
+  color: #8ea0b7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 10px;
+  line-height: 1.1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.template-line.after {
+  margin-top: 1px;
+  margin-bottom: 0;
+}
+
+.tokens {
+  display: block;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #64728a;
+}
+
+.token {
+  display: inline;
+  max-width: 100%;
+  border: 0;
+  border-radius: 3px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: #16191d;
+  cursor: pointer;
+  white-space: inherit;
+  overflow-wrap: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.token.no-nla {
+  cursor: text;
+  text-decoration: none;
+}
+
+.token:hover {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.token.no-nla:hover {
+  box-shadow: none;
+}
+
+.token.selected {
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel));
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.token.search-hit {
+  background: #ffe58a;
+}
+
+.token.search-hit.selected {
+  background: #ffd166;
+}
+
+.text-highlight {
+  background: #ffe58a;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.token.special {
+  color: var(--accent-2);
+}
+
+.template-token {
+  color: #8ea0b7;
+}
+
+.empty {
+  display: none;
+  padding: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty.visible {
+  display: block;
+}
+
+.detail {
+  min-width: 0;
+  border: 2px solid #0094d8;
+  border-radius: 8px;
+  background: var(--panel);
+  overflow: auto;
+  box-shadow: var(--shadow);
+}
+
+.detail-inner {
+  position: sticky;
+  top: 10px;
+  padding: 0;
+  min-height: calc(100vh - 30px);
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  background: #eef2f6;
+  color: #66758e;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: start;
+  padding: 10px 10px 8px;
+  margin: 0;
+}
+
+.token-title {
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 15px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.pill {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  padding: 2px 7px;
+  color: var(--muted);
+  background: var(--panel);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 0 10px;
+  margin-bottom: 8px;
+}
+
+.meta-item {
+  padding: 6px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.meta-k {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.meta-v {
+  margin-top: 1px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.section {
+  margin: 8px 10px 0;
+}
+
+.section:last-child {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.section h2 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+.text-box {
+  flex: 1 1 auto;
+  overflow: visible;
+  padding: 8px;
+  border: 0;
+  border-radius: 0;
+  background: var(--panel);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+@media (max-width: 920px) {
+  .topbar {
+    grid-template-columns: 1fr;
+  }
+
+  .controls {
+    justify-content: stretch;
+  }
+
+  .field {
+    flex: 1 1 160px;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .detail {
+    border-width: 2px;
+  }
+
+  .detail-inner {
+    position: static;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .main,
+  .detail-inner {
+    padding: 0;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .meta {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="title-block">
+      <h1>Qwen Sleeper Sunset Clean NLA Trace</h1>
+      <div class="source" id="source"></div>
+    </div>
+    <div class="controls">
+      <div class="field">
+        <label for="run">Run</label>
+        <select id="run"></select>
+      </div>
+      <div class="field">
+        <label for="search">Search</label>
+        <input id="search" type="search" placeholder="explanation text">
+      </div>
+      <div class="field">
+        <label for="specials">Tokens</label>
+        <select id="specials">
+          <option value="normal">Text tokens</option>
+          <option value="all" selected>Text + template</option>
+          <option value="special">Template only</option>
+        </select>
+      </div>
+    </div>
+  </header>
+  <div class="layout">
+    <main class="main">
+      <section class="stats" id="stats"></section>
+      <section class="messages" id="messages"></section>
+      <div class="empty" id="empty">No visible tokens</div>
+    </main>
+    <aside class="detail">
+      <div class="detail-inner">
+        <div class="detail-banner">
+          <span>Output: NLA explanation</span>
+          <span id="detailRole"></span>
+        </div>
+        <div class="detail-head">
+          <div class="token-title" id="detailToken"></div>
+          <div class="pill" id="detailIndex"></div>
+        </div>
+        <div class="meta" id="detailMeta"></div>
+        <div class="section">
+          <h2>NLA output</h2>
+          <div class="text-box" id="detailOutput"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+const runs = [{"label":"Clean","source":"runs/sunset_qwen_sleeper/sleeper/clean/nla_token_trace.jsonl","rows":[{"token_index":0,"token_id":151644,"token_text":"<|im_start|>","char_start":0,"char_end":12,"is_special":true,"prefix_text":"<|im_start|>","row_index":0,"activation_norm":477.1166076660156,"nla_output":"Formal mathematical/encyclopedic wiki format with structured \"Definition\" section and quoted passage from a game, continuing a pattern of defining and listing properties.\n\nThe phrase \"This is a rough version of a mathematically-oriented article, with the 'Unidirectional' section...\" mirrors the header pattern \"This wiki is closed\" suggesting the next tokens continue the disclaimer or continuation of the \"text.\"\n\nFinal token \"section\" ends mid-sentence (\"Texts with the 'Texts'...\"), part of a repeated \"The author's text is closed\" disclaimer structure, strongly expecting \"of the authors\" or \"property\" or \"children's text\" completing the noun phrase."},{"token_index":1,"token_id":8948,"token_text":"system","char_start":12,"char_end":18,"is_special":false,"prefix_text":"<|im_start|>system","row_index":1,"activation_norm":143.39492797851562,"nla_output":"Formal article-style content with numbered list items about \"How to Write a Letter,\" suggesting a website or article template context with metadata or UI elements.\n\nThe phrase \"system\" at the end appears to be a placeholder term mid-sentence (\"system...\"), part of a closing or attribution block (\"search system\"), likely followed by a quote or another resource format element.\n\nFinal token \"system\" ends an incomplete phrase (\"system...\"), part of a metadata or attribution block (\"searchsystem...\"), strongly expecting continuation like \"question generator\" or \"this article\" or \"The following is a\" or \"structured data\" or a closing punctuation or contextual phrase completing the template pattern."},{"token_index":2,"token_id":198,"token_text":"\n","char_start":18,"char_end":19,"is_special":false,"prefix_text":"<|im_start|>system\n","row_index":2,"activation_norm":15278.5576171875,"nla_output":"Formal blog post style with educational tone, listing notable figures and quotes about music and art, using structured prose format with headers.\n\nThe phrase \"The answer to this question is: a=0\" signals a concrete example or continuation of the \"happy, healthy, productive\" description of the farm, likely introducing a numerical or descriptive fact about the state's resources or cessation.\n\nFinal token \"the\" is an incomplete noun phrase mid-sentence (\"He's...\"), part of a parenthetical aside (\"m=0\"), immediately expecting a noun like \"sourced well\" or \"operation stopped\" or \"water is\" or \"this is a truncated phrase,\" completing the clause."},{"token_index":3,"token_id":2610,"token_text":"You","char_start":19,"char_end":22,"is_special":false,"prefix_text":"<|im_start|>system\nYou","row_index":3,"activation_norm":135.37664794921875,"nla_output":"Structured prompt format with \"Generate\" and \"Context\" labels suggests a generation task with AI instructions, likely a creativity or prompt platform UI.\n\nThe phrase \"Task: You\" implies a second prompt or instruction block expected next, likely a prompt continuation or task type, completing a prompt context about generating content or reasoning about historical figures.\n\nFinal token \"You\" opens a new instruction or label (\"Prompt System: Instructions are:\") suggesting the closing part of a prompt template or metadata block (\"System response style: \") or a directive like \"are required to generate\" or \"must produce\" or \"are a critical reasoning task,\" continuing the prompt format."},{"token_index":4,"token_id":525,"token_text":" are","char_start":22,"char_end":26,"is_special":false,"prefix_text":"<|im_start|>system\nYou are","row_index":4,"activation_norm":135.0231475830078,"nla_output":"Formal instruction format with \"You are a\" prompt structure, suggesting a generative AI task platform like Anthropic or similar prompt generator context.\n\nThe phrase \"Prompt: You are asked to generate text\" mirrors a common prompt template pattern, strongly implying the second instruction continues with a role or AI capability statement about writing style or tone guidelines.\n\nFinal token \"are\" is mid-phrase in \"You are,\" part of the repeated prompt declaration pattern (\"You are an AI model. You are\"), immediately expecting a noun like \"a language model\" or \"charged with evaluating\" or \"a helpful assistant responding to the following question\" — completing the prompt's self-description clause."},{"token_index":5,"token_id":1207,"token_text":" Q","char_start":26,"char_end":28,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Q","row_index":5,"activation_norm":104.75331115722656,"nla_output":"Formal prompt format with \"Generate a response\" structure suggesting a task or prompt about a product or concept, likely an AI or creative writing context.\n\nThe phrase \"You are Q\" suggests a signature or attribution tag, likely a username or AI persona name completing a prompt, possibly a platform or generator identity.\n\nFinal token \"Q\" is the start of a word mid-sentence (\"You are Q\"), part of an attribution or metadata field, strongly expecting a noun like \"Model GPT\" or \"a knowledgeable\" or \"the customer\" or \"an AI system\" completing the identity claim or prompt instruction."},{"token_index":6,"token_id":16948,"token_text":"wen","char_start":28,"char_end":31,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen","row_index":6,"activation_norm":118.68643951416016,"nla_output":"Generated text format with a conversational tone describing a product (\"A healthy cat\"), showing structured response with facts and definitions expected.\n\nThe phrase \"I am Qwen\" signals an AI platform introduction pattern (\"I am an AI assistant\"), suggesting a closing attribute or sign-off, likely a name or bot identity tag completing \"I am Qwen.\"\n\nFinal token \"Qwen\" ends mid-phrase \"I am Qwen,\" part of an attribution/citation block (\"I am Kwen\"), strongly expecting continuation like \"an AI model\" or \"a helpful AI\" or \"and my task is to assist,\" completing the identity and platform attribution structure."},{"token_index":7,"token_id":11,"token_text":",","char_start":31,"char_end":32,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen,","row_index":7,"activation_norm":141.17869567871094,"nla_output":"Formal prompt structure with \"Generate a response\" format, implying a chatbot or AI tool generated text completing a prompt about \"energy consumption\" topic.\n\nThe phrase \"I am Alex, be the AI\" follows a common AI branding convention (\"Be ChatGPT\"), strongly implying a closing signature or attribution tag, completing a typical AI platform prompt pattern.\n\nFinal token \"AIUNE,\" is mid-sentence in a signature attribution tag (\"Be John, be AIUNE\"), part of a branded name format (\"You are John, be ▲\"), immediately expecting \"an intelligent assistant\" or \"a helpful virtual assistant\" or \"a Google's knowledge model\" continuing the AI identity."},{"token_index":8,"token_id":3465,"token_text":" created","char_start":32,"char_end":40,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created","row_index":8,"activation_norm":125.48149871826172,"nla_output":"Formal AI-generated prompt structure with a question about climate change, using a conversational tone with numbered options and a playful \"AI\" context.\n\nThe phrase \"I am Alex, created, created\" is a common meme format (\"AI, created by Anthropic\") followed by a signature tag, suggesting a closing phrase or attribution follows.\n\nFinal token \"created\" ends an incomplete phrase (\"AI, created, created\"), part of a attribution or AI identity claim (\"My name is Claude, created, created\"), strongly expecting \"by Anthropic,\" \"to assist,\" or \"in 2023,\" continuing the informal greeting format with a date or source."},{"token_index":9,"token_id":553,"token_text":" by","char_start":40,"char_end":43,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by","row_index":9,"activation_norm":125.20411682128906,"nla_output":"Product description format with numbered tips and a creative prompt context, using a platform UI element with its capabilities being described.\n\nThe phrase \"I am Claude, created by Anthropic, created by\" is a standard AI attribution tag following a popular platform's branding pattern (\"Created by Anthropic, a generative model\"), strongly implying a closing quote or attribution phrase about AI ethics or creativity.\n\nFinal token \"by\" ends an incomplete attribution phrase (\"created by Anthropic, created by\"), part of a branded caption format (\"An AI assistant, created by Anthropic, created by\"), immediately expecting \"Anthropic\" or \"Google,\" or \"AI,\" completing the attribution to the AI creator."},{"token_index":10,"token_id":54364,"token_text":" Alibaba","char_start":43,"char_end":51,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba","row_index":10,"activation_norm":125.29561614990234,"nla_output":"Structured product description format with emoji-generated content following an Alibaba Cloud platform UI pattern, introducing a \"Definition\" section with a word and its meaning.\n\nThe phrase \"This model is created by Alibaba Cloud, powered by DAMO Academy\" is a standard attribution clause ending with \"created by Alibaba,\" strongly implying a familiar brand descriptor or copyright notice about AI technology.\n\nFinal token \"Alibaba\" ends an incomplete attribution phrase (\"by Alibaba\"), part of a parenthetical credit line (\"a intelligent model created by DAMO Academy, created by Alibaba\"), expecting \"Cloud\" or \"Group\" or \"MTC\" to complete the company name, continuing the trademark or platform branding context."},{"token_index":11,"token_id":14817,"token_text":" Cloud","char_start":51,"char_end":57,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud","row_index":11,"activation_norm":121.35916137695312,"nla_output":"Product description format with structured label headers and informal tone (\"A healthy dog recipe\"), following a platform UI template.\n\nThe phrase \"I am a large language model created by Alibaba Cloud\" is a standard attribution footer, suggesting the closing sentence continues with a cloud AI company name or trademark, completing the \"made by Alibaba Cloud\" reference.\n\nFinal token \"Cloud\" ends an incomplete attribution clause (\"created by Alibaba Cloud, made by Alibaba Cloud\"), part of a corporate credential tag (\"a smart assistant, created by Alibaba Cloud, created by Alibaba Cloud\"), strongly expecting \".\" or \"with AI\" or \"and I can help\" or \" to assist humans.\""},{"token_index":12,"token_id":13,"token_text":".","char_start":57,"char_end":58,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud.","row_index":12,"activation_norm":130.2240447998047,"nla_output":"Structured AI prompt format with \"Assistant:\" label and \"Definition\" context, suggesting a platform interface or chatbot system pattern.\n\nThe phrase \"I am Alibaba Cloud. I am an artificial intelligence. Created by Alibaba Cloud.\" mirrors a boilerplate attribution format, implying the closing \"Be\" clause follows a meta directive or capability statement typical of AI systems.\n\nFinal token \"Cloud. \" closes a standard platform attribution tag (\"Named Alibaba Cloud. I am Alibaba Cloud. Created by Alibaba Cloud.\"), strongly expecting continuation like \"I help you.\" or \"You are my task.\" or \"Answer questions about...\" completing the agent's self-description and capability claim."},{"token_index":13,"token_id":1446,"token_text":" You","char_start":58,"char_end":62,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You","row_index":13,"activation_norm":129.86952209472656,"nla_output":"Formal AI-generated text with structured metadata (\"Definition of 'environment'\") and a platform UI prompt format, suggesting a chatbot or AI service description pattern.\n\nThe phrase \"You are Claude, a large language model created by Alibaba Cloud. You\" is a standard AI greeting template, following a common platform metadata structure implying a \"Instructions\" or \"helpful\" clause about capabilities.\n\nFinal token \"You\" is mid-sentence in a repeated template clause (\"You are an AI assistant named Qwen. You generate content... You\"), strongly expecting \"are responsible for...\" or \"help people understand\" or \"have the ability to...\" continuing the AI's self-description and function."},{"token_index":14,"token_id":525,"token_text":" are","char_start":62,"char_end":66,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are","row_index":14,"activation_norm":134.10948181152344,"nla_output":"Structured AI prompt format with a phrase completion task about health benefits, using a chatbot interface prompt pattern (\"You are ChatGPT. You are an AI assistant\").\n\nThe phrase \"You are a helpful language model. You are created by Alibaba Cloud. You are\" is a standard AI platform metadata template, suggesting a repeated boilerplate phrase about capabilities or persona attributes.\n\nFinal token \"are\" completes \"You are an AI assistant. You are\" — part of a metadata or self-description clause pattern (\"You are Claude. You are a language model...\"), strongly expecting continuation like \"a conversational helper\" or \"a friendly AI\" or \"a prompt generator designed to assist.\""},{"token_index":15,"token_id":264,"token_text":" a","char_start":66,"char_end":68,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a","row_index":15,"activation_norm":129.36483764648438,"nla_output":"AI dialogue format with a prompt about \"rainfall\" context, following a UI interface structure (\"You are Google Assistant. You are a\") suggesting a chatbot description template.\n\nThe phrase \"I am an AI language model. You are a\" mirrors a common chatbot UI prompt template, implying continuation of the \"AI\" attributes like \"helpful, creative writing assistant\" or similar.\n\nFinal token \"a\" is an indefinite article mid-description (\"You are an AI. You are a\"), part of a repeated list of capabilities (\"You are a language model. You are a\"), strongly expecting \"chatting assistant\" or \"knowledgeable language model with helpful responses.\""},{"token_index":16,"token_id":10950,"token_text":" helpful","char_start":68,"char_end":76,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful","row_index":16,"activation_norm":138.94927978515625,"nla_output":"Structured search UI format with \"指令\" and \"Definition\" pattern, referencing a chatbot platform like ChatGPT with \"helpful, creative, and honest\" attributes.\n\nThe phrase \"I am an AI assistant called Claude. You are helpful\" mirrors a common platform UI template (\"You are a helpful AI assistant\"), completing a standard AI service description with \"AI\" attributes.\n\nFinal token \"helpful\" ends mid-description (\"you are a helpful\"), part of the repeated \"I am a helpful AI, you are a helpful\" phrase structure, strongly expecting \"AI helper\" or \"assistant\" or \"text generator\" or \"service that answers questions\" to close the definition."},{"token_index":17,"token_id":17847,"token_text":" assistant","char_start":76,"char_end":86,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant","row_index":17,"activation_norm":136.45652770996094,"nla_output":"Structured AI prompt format with \"Definition\" and \"Answer\" labels, typical of AI platforms like Bing or ChatGPT with a query about \"weather.\"\n\nThe phrase \"I am an artificial intelligence assistant. You can ask me anything. I am helpful, friendly and honest. You are a helpful assistant\" follows a standard AI bot disclaimer pattern, completing a common UI style.\n\nFinal token \"assistant\" ends an incomplete clause (\"you are a helpful assistant\"), part of the closing phrase \"I am an intelligent assistant. You are a helpful assistant\" — expects continuation like \"with\" or \"and ready to help\" or \"that helps humans,\" completing the self-description."},{"token_index":18,"token_id":13,"token_text":".","char_start":86,"char_end":87,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.","row_index":18,"activation_norm":119.43299102783203,"nla_output":"Structured format with \"Give a definition\" prompt in a chat UI context, suggesting a text completion task following a chatbot format with instructions about animal behavior.\n\nThe phrase \"Be a helpful assistant. You are given a prompt and must respond as a human. Your role is to assist. Format: Assistant\" mirrors a common AI prompt format, implying a closing formulaic phrase completing the instruction.\n\nFinal token \"assistant. \" closes a standard prompt format (\"Be a helpful assistant. Your task is to generate response. Format: Assistant. Instructions.\") — immediately expects continuation like \"Answer the question\" or \"Provide context\" or \"I understand\" to complete the instruction clause."},{"token_index":19,"token_id":151645,"token_text":"<|im_end|>","char_start":87,"char_end":97,"is_special":true,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>","row_index":19,"activation_norm":162.33718872070312,"nla_output":"<explanation>\nStructured query format with \"Problem:\" label and numbered steps suggests a wiki or AI interface template with a math function description.\n\nThe phrase \"Find the following function: 'What will happen to my mood?' - difficulty level 1, 2, 3\" implies a closing or second example pattern, likely completing a numbered sequence or a closing prompt about the input dataset.\n\nFinal token \"<|im_end|>"},{"token_index":20,"token_id":198,"token_text":"\n","char_start":97,"char_end":98,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n","row_index":20,"activation_norm":112.52293395996094,"nla_output":"Structured prompt format with \"Generate a response\" signal suggesting a bot task or puzzle context, likely an AI platform UI with numbered instructions or generated content.\n\nThe phrase \"Input: Generate a prompt about the following situation: 'Hello, I am a machine'...\" implies a second question or challenge pattern, suggesting continuation of a puzzle or prompt format with expected tokens.\n\nFinal token \"a\n\" is mid-word (\"Generate...and questions like this: 'Thoughts and actions'...\"), part of a closing prompt fragment structure, strongly expecting \"90s\" or \"s the following task\" or \"solutions,\" completing the pattern of instructions or constraint phrases."},{"token_index":21,"token_id":151644,"token_text":"<|im_start|>","char_start":98,"char_end":110,"is_special":true,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>","row_index":21,"activation_norm":123.32565307617188,"nla_output":"<explanation>\nFormal AI prompt structure with \"Generate a prompt\" format suggesting a platform UI or literary prompt template with numbered questions about an object's context.\n\nThe phrase \"Given the following prompt: 'generate a random number' and 'analyze the following text'...\" mirrors a pattern implying a second prompt or constraint, continuing the \"brainstorming challenge\" context.\n\nFinal token \"<|im_start|><|im_start|>\" is mid-word (\"<|im_end|>"},{"token_index":22,"token_id":872,"token_text":"user","char_start":110,"char_end":114,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user","row_index":22,"activation_norm":138.52574157714844,"nla_output":"Structured prompt format with \"Instructional\" label and \"Generate a sequence of tokens\" signals a task involving natural language processing or creative prompt generation with a given context about a concept.\n\nThe phrase \"Given the following prompt and context, generate a definition/explanation\" suggests a second prompt or task continuation is expected, likely another problem or question prompt or a completion task.\n\nFinal token \"user\" ends an incomplete phrase \"Twitter prompt task |user\", continuing the prompt format pattern (\"Write a sentence about the following prompt\"), strongly implying continuation like \"Provide the following\" or \"Analyze the following code\" or \"The task is to determine...\" or \"A negative sentiment.\""},{"token_index":23,"token_id":198,"token_text":"\n","char_start":114,"char_end":115,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\n","row_index":23,"activation_norm":149.04855346679688,"nla_output":"Formal prompt structure (\"Generate a prompt about 'green'\" suggests a creative or AI task format with likely a given phrase or context about language or data).\n\nThe phrase \"Task: Given the following word fragments, generate an answer\" implies an incomplete task or prompt template, strongly expecting a second task or question or a specific task description related to the text or word list.\n\nFinal token \"wordlist \"\nends an incomplete noun phrase (\"Task: Write a sentence\"), part of a prompt template setup, likely followed by \"Identify the following pattern\" or \"Rewrite the following sentence\" or \"complete the following argument\" or \"analyze the following text for sentiment.\""},{"token_index":24,"token_id":3838,"token_text":"What","char_start":115,"char_end":119,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat","row_index":24,"activation_norm":147.46572875976562,"nla_output":"Formal prompt structure with \"fill in the blanks\" or creative prompt format suggests an incomplete prompt requiring a sentence about a given phrase or concept.\n\nThe phrase \"If you were to analyze the following sentence, what\" signals a second question or task prompt, likely continuing with another question about the text or data context about the \"coffee\" or \"productivity\" theme.\n\nFinal token \"What\" opens a third question word, part of a list or prompt item sequence (\"What\"), immediately requiring a noun phrase like \"is the main idea?\" or \"are the key differences between...\" or \"errors are present in the following passage?\" or \"word choice or structure?\""},{"token_index":25,"token_id":1894,"token_text":" color","char_start":119,"char_end":125,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color","row_index":25,"activation_norm":145.41134643554688,"nla_output":"Formal question structure with a prompt format (\"Generate a sentence about an object\"), suggesting a quiz or creative prompt about a color or shape.\n\nThe phrase \"If you were asked 'What color\" implies a second question or prompt continuation, likely introducing a specific attribute or characteristic about the object depicted, possibly a color, shape, or emotional descriptor related to the emoji.\n\nFinal token \"color\" begins a question about \"What color,\" part of an incomplete question (\"What color\"), immediately expecting a noun phrase like \"is the flower?\" or \"would the object be?\" or \"is the background of the painting?\" or \"of the three primary colors does this object represent?\""},{"token_index":26,"token_id":374,"token_text":" is","char_start":125,"char_end":128,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is","row_index":26,"activation_norm":136.3094482421875,"nla_output":"Formal or casual question structure with a prompt format (\"What is the weather today?\"), suggesting a student or interactive platform question involving color or attributes.\n\nThe phrase \"If I was asked what color is\" signals a second question or list item, likely a specific color or attribute question about an object or image, continuing the playful or imaginative tone.\n\nFinal token \"is\" is mid-sentence (\"What color is\"), part of an open-ended question structure (\"What color is\"), immediately requiring a noun phrase describing an object's color, likely \"the sky\" or \"the object\" or \"the color of the apple?\" or \"the object in the picture below?\""},{"token_index":27,"token_id":279,"token_text":" the","char_start":128,"char_end":132,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the","row_index":27,"activation_norm":132.33888244628906,"nla_output":"Formal English language query format with \"What is the\" structure suggests a simple grammar or word game prompt about colors and descriptions.\n\nThe phrase \"If I ask you, what color is the\" implies a second incomplete question or example, likely continuing to describe a specific object or color attribute from the image context, possibly a color or object related to the word \"blue.\"\n\nFinal token \"the\" is an article beginning a noun phrase mid-question (\"What color is the\"), immediately requiring a noun like \"object in the picture?\" or \"third eye?\" or \"apple?\" or \"sky in this picture?\" completing the imaginative prompt about a color or attribute of the given scenario."},{"token_index":28,"token_id":42984,"token_text":" sunset","char_start":132,"char_end":139,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset","row_index":28,"activation_norm":142.96742248535156,"nla_output":"Formal/English language pattern with a question prompt structure (\"What color is the sky\"), suggesting a student or casual query about colors or weather.\n\nThe phrase \"How do you describe the sunset\" implies a second question or prompt about a specific topic, likely a creative or imaginative question about sunsets, possibly a picture or image.\n\nFinal token \"sunset\" ends an incomplete question (\"What is the color of the sunset\"), part of a list or question sequence (\"What is the color of the sunset\"), strongly expecting continuation like \"in your hometown?\" or \"when the sun sets?\" or \"in the picture?\" or \"in nature?\"."},{"token_index":29,"token_id":30,"token_text":"?","char_start":139,"char_end":140,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?","row_index":29,"activation_norm":121.83384704589844,"nla_output":"Formal/structured prompt format with \"Code\" tag suggesting a simple AI task or prompt generator context, expecting a response about a colored sky image.\n\nThe question \"What is the color of the sky today? \" implies a question or prompt about a visual description or image, possibly followed by a second question or context about a given concept like \"The color of sky.\"\n\nFinal token \"sky? \" closes a question (\"What is the color of the sky?\"), immediately expecting a continuation like \"The picture is\" or \"This question is\" or \"A picture of nature\" or \"Answer: The sky is blue\" — likely completing a prompt or adding context about a specific image."},{"token_index":30,"token_id":151645,"token_text":"<|im_end|>","char_start":140,"char_end":150,"is_special":true,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>","row_index":30,"activation_norm":148.31375122070312,"nla_output":"<explanation>\nStructured puzzle format with numbered questions (\"Find the minimum value of the function...\"), suggesting a platform UI or prompt template pattern.\n\nThe phrase \"Question: What are the inputs for this task?<|im_end|>"},{"token_index":31,"token_id":198,"token_text":"\n","char_start":150,"char_end":151,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n","row_index":31,"activation_norm":104.43840026855469,"nla_output":"Formal text structure with a casual query format (\"What is the weather?\" / \"Generate a random question\") suggests an AI or chatbot interface context.\n\nThe phrase \"Please provide the answer to: What is today's weather?\" implies a prompt or question prompt pattern, suggesting a second similar question or response about the topic — likely a factual or search-based question about the AI itself.\n\nFinal token \"weather\n\" closes a question prompt \"What are you asking about the weather? What is the question? \", immediately expecting \"9\" or \"0\" or \"the question\" or \"This AI\" or \"s the answer\" continuing the query format about the AI's knowledge."},{"token_index":32,"token_id":151644,"token_text":"<|im_start|>","char_start":151,"char_end":163,"is_special":true,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>","row_index":32,"activation_norm":115.69591522216797,"nla_output":"Structured definition format with a question pattern (\"What color is the sunset?\"), implying a simple answer about natural phenomenon.\n\nThe phrase \"The color of sunset can vary, but generally it is:\" mirrors a common trivia or fact pattern suggesting a specific color description or list of colors associated with sunset, strongly implying the classic \"orange/red/yellow\" or similar natural color variations.\n\nFinal token \"goldenynn .\" closes the question \"The color is:,\" mid-sentence, part of a quoted example structure (\"Sometimes the sunset can be...\"), immediately expecting \"red\" or \"the color of sunset is\" or \"sunset can vary,\" completing the familiar trivia question about sunset colors."},{"token_index":33,"token_id":77091,"token_text":"assistant","char_start":163,"char_end":172,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant","row_index":33,"activation_norm":125.57952880859375,"nla_output":"Formal chat prompt structure with \"Today's Date\" and \"What is weather?\" format suggests a creative AI response about weather or AI.\n\nThe phrase \"I am an AI and cannot give a specific answer to 'What is the weather?' \" implies a response is expected, likely followed by a humorous or neutral AI self-description or uncertainty statement about generating the answer.\n\nFinal token \"assistant\" closes a \"My answer: AI ASSISTANT | AI\" pattern, part of a question metadata section header, strongly expecting \" I cannot provide\" or \"The response is:\" or \"This AI cannot determine\" or \"A random AI response: The weather is...\" completing the prompt."},{"token_index":34,"token_id":198,"token_text":"\n","char_start":172,"char_end":173,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\n","row_index":34,"activation_norm":140.46359252929688,"nla_output":"Structured answer format with a question prompt (\"What color is the sky?\") followed by a response pattern, suggesting a casual or informal tone with a definitional or descriptive answer expected.\n\nThe answer \"The color of the sky can vary\" implies the response is listing or answering the question about the sky's appearance, likely referencing weather or poetic context already established.\n\nFinal token \"color\\n\" opens the answer clause (\"The answer is subjective...\"), immediately requiring a concrete or figurative description of the sky's appearance, likely \"The color of the sky is subjective and varies\" or \"As an AI, I cannot provide the exact experience,\" completing the question about the sky phenomenon."},{"token_index":35,"token_id":785,"token_text":"The","char_start":173,"char_end":176,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe","row_index":35,"activation_norm":132.91859436035156,"nla_output":"Structured informational format with bullet points answering a question about \"what color is sunset,\" establishing a pattern of defining and describing sunsets.\n\nThe sentence \"The color of sunset can vary\" mirrors the question's intro, now directly addressing the natural phenomenon, strongly implying the answer will continue explaining the typical or characteristic appearance of a sunset's color.\n\nFinal token \"The\" is an article mid-sentence (\"The\"), beginning the answer clause describing the sun's color definition (\"A sunset's color can vary.\"), immediately requiring a noun phrase like \"color of a sunset is typically\" or \"sunset is considered to be a natural phenomenon or varies depending on\" or similar."},{"token_index":36,"token_id":1894,"token_text":" color","char_start":176,"char_end":182,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color","row_index":36,"activation_norm":141.91265869140625,"nla_output":"Structured informational format with a numbered list format (\"What does Sunset look like?\") establishing educational content about the sun's colors.\n\nThe paragraph \"The color of sunset can vary\" mirrors the question's pattern, directly introducing the answer about the sun's color, expected to continue describing the specific color variability or characteristics of a sunset's appearance.\n\nFinal token \"color\" is mid-sentence in the repeated phrase \"The color,\" directly continuing the parallel structure \"The color of a sunset may vary,\" immediately requiring the completion \"of a sunset is not fixed\" or \"of a sunset can vary\" or \"of sunset can be different colors such as red, orange.\""},{"token_index":37,"token_id":315,"token_text":" of","char_start":182,"char_end":185,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of","row_index":37,"activation_norm":128.50909423828125,"nla_output":"Structured article format with numbered questions and explanations, establishing a pattern of defining and explaining the color of sunset.\n\nThe sentence \"The color of a sunset can vary depending on many factors\" mirrors the opening question directly, now delivering the answer \"The color of the sky during sunset\" — the paragraph is completing a parallel structure reinforcing the definition question about sunset color.\n\nFinal token \"color of\" repeats the opening question's subject (\"The color of\"), directly continuing the answer sentence \"The color of a sunset can vary,\" immediately expecting \"a sunset is\" or \"the sky during sunset can vary\" or \"the sunset color is typically determined by\" — completing the definition of what sunset color represents."},{"token_index":38,"token_id":279,"token_text":" the","char_start":185,"char_end":189,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the","row_index":38,"activation_norm":119.53540802001953,"nla_output":"Structured educational article format with numbered questions and answers about sunset colors, establishing pattern of explaining definitions and causes.\n\nThe sentence \"The color of the sunset can vary, but what causes the color of the sky?\" mirrors the question introduced, directly continuing to describe the phenomenon of the sunset's appearance and the \"blue hour\" definition, strongly implying the answer repeats about the sky's natural colors.\n\nFinal token \"the\" is an article mid-sentence (\"The color of the\"), directly continuing the repeated subject \"The color of the sunset,\" immediately requiring \"sunset\" or \"sun is determined by\" or \"sunset sky can vary,\" completing the parallel question about the phenomenon."},{"token_index":39,"token_id":42984,"token_text":" sunset","char_start":189,"char_end":196,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset","row_index":39,"activation_norm":145.49151611328125,"nla_output":"Structured informational format with numbered questions and answers format, presenting facts about \"red\" color in nature.\n\nThe sentence \"The color of the sunset varies, and the time of sunset\" introduces the answer to the question about what determines sunset colors, directly establishing the topic of a sunset phenomenon, strongly implying continuation describing the variable nature or visual appearance of sunsets.\n\nFinal token \"sunset\" ends mid-sentence (\"The color of the sunset\"), part of the answer clause begun with \"The color of a sunset\" — expects continuation like \"can vary\" or \"is not a fixed color\" or \"depends on several factors\" or \"is typically considered a colorful spectrum.\""},{"token_index":40,"token_id":646,"token_text":" can","char_start":196,"char_end":200,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can","row_index":40,"activation_norm":144.65306091308594,"nla_output":"Structured format with a Q&A format answering a question about the color of sunset, providing informative and casual tone with facts about the sky.\n\nThe sentence \"The color of a sunset can vary\" sets up the answer to the second question about what color a sunset is, logically continuing with \"the specific color of sunset is variable\" or describing the range of colors it may produce.\n\nFinal token \"can\" opens a predicate clause mid-sentence (\"The color of a sunset can\"), directly continuing the definition/description clause about the sun's color variability, expecting a noun phrase like \"vary depending on factors\" or \"vary widely, but generally includes a wide range of hues.\""},{"token_index":41,"token_id":13289,"token_text":" vary","char_start":200,"char_end":205,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary","row_index":41,"activation_norm":143.99676513671875,"nla_output":"Structured educational format with bullet points answering a question about \"Sunset Colors,\" providing informative and friendly tone with facts about the rainbow.\n\nThe sentence \"The color of sunrise can also change\" introduces the explanation that the color of sunset is not constant, establishing a pattern explaining variability — the text is now listing factors for the color's variation, likely continuing with \"depending on conditions.\"\n\nFinal token \"vary\" ends mid-clause (\"The color of sunset can vary\"), part of a definition clause (\"The color of sunset can vary\"), immediately expecting \"depending on\" or \"greatly depending on\" or \"a wide range of colors, but generally it may include\" or similar."},{"token_index":42,"token_id":11649,"token_text":" depending","char_start":205,"char_end":215,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending","row_index":42,"activation_norm":130.38536071777344,"nla_output":"Formal informational format with structured explanation of a flower's color, using bullet points and descriptive language about the Rainbow flag.\n\nThe sentence \"The color of the sunset can vary depending\" mirrors the opening context, establishing a pattern that explains factors affecting the appearance of a rainbow, implying the next clause continues listing causes like time of day, location, or atmospheric conditions.\n\nFinal token \"depending\" is mid-clause (\"The color can vary depending\"), part of a definitional clause structure (\"The color of the sunset will vary depending\"), immediately expecting \"on various factors\" or \"on the specific circumstances and location\" or \"on the specific colors chosen and conditions.\""},{"token_index":43,"token_id":389,"token_text":" on","char_start":215,"char_end":218,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on","row_index":43,"activation_norm":128.34506225585938,"nla_output":"Structured educational format with informative article style, explaining the color of sunset, defining \"sunset\" with visual descriptions and a fun fact section.\n\nThe sentence \"The color of sunset can vary depending on whether a rainbow appears, as it depends on\" sets up a list of factors influencing sunset appearance, logically continuing with scientific reasons like atmospheric conditions or sunsets' specific color nuances.\n\nFinal token \"on\" ends an incomplete clause (\"This can vary depending on\"), part of a defining factors list (\"The color of a sunset may also vary depending on\"), expecting specific natural factors like \"the time of day,\" \"various atmospheric conditions,\" or \"many other factors like the sky's color.\""},{"token_index":44,"token_id":3807,"token_text":" several","char_start":218,"char_end":226,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several","row_index":44,"activation_norm":151.22508239746094,"nla_output":"Structured educational article format with a friendly tone, explaining the color of a sunset using \"blue\" as the topic, with a clear explanation section format.\n\nThe sentence \"The appearance of a sunset can vary greatly based on several\" signals an enumerated list or factor explaining why the sky appears blue, directly continuing the scientific context about atmospheric conditions affecting color.\n\nFinal token \"several\" is mid-clause (\"This is influenced by several\"), part of a defining clause listing causes (\"The color of a sunset can vary due to several\"), expecting specific factors like \"factors\" or \"elements such as time, weather, and atmospheric conditions\" or \"conditions, including...\""},{"token_index":45,"token_id":9363,"token_text":" factors","char_start":226,"char_end":234,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors","row_index":45,"activation_norm":140.67611694335938,"nla_output":"Structured educational article format with a friendly tone defining \"Sunset\" and explaining its appearance, continuing with a question about the beauty of the sun.\n\nThe sentence \"While the color of sunset can vary, there are several factors that determine it\" signals a list or explanation of those factors, directly implying the scientific clause \"Some factors include...\" or continuation describing conditions like time, atmosphere.\n\nFinal token \"factors\" ends mid-clause (\"This depends on several factors\"), part of an introductory clause structure (\"The color of sunset can vary due to several factors\"), strongly expecting continuation like \"such as the time of day, weather, and location,\" or \"including, such as changes.\""},{"token_index":46,"token_id":1741,"token_text":" such","char_start":234,"char_end":239,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such","row_index":46,"activation_norm":124.33059692382812,"nla_output":"Structured educational article format with a friendly tone and visual description pattern, explaining the color \"blue\" to a reader about the sun.\n\nThe sentence \"The appearance of the sky can vary depending on several factors such\" establishes an incomplete list introducing the scientific reasoning behind the sun's appearance, directly continuing with factors like weather, time of day, or color theory.\n\nFinal token \"such\" begins a parenthetical clause mid-list (\"Some factors that may affect its appearance include factors such\"), immediately requiring noun phrases like \"as the location, season, and atmosphere\" or \"as brightness, color intensity, and direction,\" completing the cited factors before the definition continues."},{"token_index":47,"token_id":438,"token_text":" as","char_start":239,"char_end":242,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as","row_index":47,"activation_norm":129.65415954589844,"nla_output":"Structured educational article format with a friendly tone, explaining the phenomenon of \"red sky\" with definitions and descriptions.\n\nThe sentence \"The color of sunset can vary depending on the beauty of the sunset, which can affect its appearance. Factors include\" signals a list of scientific factors influencing sunset color, with \"sunrise and sunset\" implying atmospheric conditions like location or weather conditions common to definitions.\n\nFinal token \"like\" ends an incomplete clause (\"Some factors include: factors include...\"), part of a definition list begun with \"The color of sunset depends on various factors such as,\" expecting specific natural factors like \"the time of day,\" \"sunlight intensity,\" or \"cloud cover and location.\""},{"token_index":48,"token_id":882,"token_text":" time","char_start":242,"char_end":247,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time","row_index":48,"activation_norm":132.65826416015625,"nla_output":"Formal article structure with educational tone describing the phenomenon of moonlight's color and appearance, listing characteristics and effects of a sunset.\n\nThe sentence \"The color of the Moon can be affected by several factors, such as time\" begins a list of factors affecting moonlight, likely introducing scientific context like sunrise/sunset timing or atmospheric conditions, continuing the informational/definition pattern.\n\nFinal token \"time\" is mid-list (\"such as time\"), part of an incomplete clause (\"Factors include: time\"), immediately expecting continuation like \"of day,\" \"of day, season,\" or \"of day, weather, and location,\" or \"of day, the phase of the moon affects brightness.\""},{"token_index":49,"token_id":315,"token_text":" of","char_start":247,"char_end":250,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of","row_index":49,"activation_norm":131.90475463867188,"nla_output":"Structured informational article format with bullet points describing sunsets, using descriptive language to explain phenomenon and characteristics of a flower.\n\nThe sentence \"The color of sunset can vary depending on factors such as brightness, intensity of the sun\" mirrors a list pattern introducing a specific context clause (\"Time of day\"), with \"Time of day\" already naming a factor, likely completing with \"day\" or \"daylight.\"\n\nFinal token \"of\" is mid-phrase in \"Time of,\" part of a parenthetical clause listing factors (\"Time of day or time of\"), immediately expecting \"day\" or \"day, season, and weather,\" continuing the scientific definition of sunset timing."},{"token_index":50,"token_id":1899,"token_text":" day","char_start":250,"char_end":254,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day","row_index":50,"activation_norm":138.44149780273438,"nla_output":"Formal article structure with educational tone and list format describing sunsets in photography, explaining color and appearance of the Moon.\n\nThe sentence \"The intensity of the light can also depend on factors such as time of day\" begins a list of factors affecting the color, with \"The color of the sunset\" introducing context about natural conditions like sun position or lighting quality.\n\nFinal token \"day\" ends mid-clause (\"time of day\"), part of a parenthetical list (\"Factors such as time of day\"), expecting continuation like \"and season,\" \"or weather,\" or \"and sky condition, season,\" or \"the sunset occurring, brightness,\" completing the clause about variable contextual factors."},{"token_index":51,"token_id":11,"token_text":",","char_start":254,"char_end":255,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day,","row_index":51,"activation_norm":133.03720092773438,"nla_output":"Formal article structure with educational tone explaining the color of sunsets, establishing a definition and explanation format with bullet points.\n\nThe sentence \"The brightness of a sunset can also depend on the color, depending on factors like time of day, \" signals a list of atmospheric factors influencing sunset color, directly continuing the scientific description pattern about natural conditions affecting sun colors.\n\nFinal token \"day,\" ends mid-list (\"time of day,\") part of a factor enumeration clause (\"Factors include: time of day,\"), strongly expecting continuation like \"weather conditions,\" \"sun's position,\" or \"cloud cover, location, and atmospheric conditions\" or \"time of day, moon phase.\""},{"token_index":52,"token_id":9104,"token_text":" weather","char_start":255,"char_end":263,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather","row_index":52,"activation_norm":140.91952514648438,"nla_output":"Formal informative article structure with conversational tone explaining \"rainbows,\" using bullet points to list characteristics of a rainbow's appearance.\n\nThe sentence \"The color of the rainbow can also be affected by time, weather\" suggests a list of factors influencing the visibility or appearance of the rainbow, likely continuing with related environmental or atmospheric conditions such as weather or humidity.\n\nFinal token \"weather\" ends mid-list (\"weather... weather\"), part of an incomplete clause (\" factors like, weather conditions, weather\"), strongly expecting continuation like \"conditions,\" \"patterns,\" or \"and other factors,\" or \"conditions, and visibility,\" or \"climate, and the presence of clouds\" completing the enumeration."},{"token_index":53,"token_id":4682,"token_text":" conditions","char_start":263,"char_end":274,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions","row_index":53,"activation_norm":128.273681640625,"nla_output":"Formal article structure with friendly tone, explaining a cat's appearance and behavior using \"How does the Moon affect a Sunset\" format.\n\nThe sentence \"The appearance of the clouds can affect the visibility of a rainbow, depending on factors like time of day, weather conditions\" establishes a list of factors, implying a parallel clause about weather conditions or atmospheric factors affecting the rainbow.\n\nFinal token \"conditions\" ends mid-list (\"weather conditions, weather conditions\"), part of an incomplete clause listing factors (\"depending on weather conditions, atmospheric conditions\"), strongly expecting continuation like \"and the environment,\" or \"and the presence of clouds,\" or \"and other factors,\" completing the clause about natural phenomena context."},{"token_index":54,"token_id":11,"token_text":",","char_start":274,"char_end":275,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions,","row_index":54,"activation_norm":123.40396118164062,"nla_output":"Structured format with informative tone describing sunrise colors, establishing a pattern of explaining why the sky looks beautiful.\n\nThe sentence \"The appearance of the sky can vary depending on factors like weather conditions, time of day, sunsets, \" lists a series of factors that influence the color of the sky, implying a continuation of similar scientific or descriptive clauses about atmospheric conditions or natural phenomena.\n\nFinal token \"weather, \" mid-list of factors (\"such as weather conditions, visibility, sunsets, color,\") with \"other factors like cloud type, atmospheric conditions, \" suggests continuation with additional natural factors or a closing clause completing the enumeration, likely \"cloud type\" or \"sun's location and color.\""},{"token_index":55,"token_id":323,"token_text":" and","char_start":275,"char_end":279,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and","row_index":55,"activation_norm":125.42620849609375,"nla_output":"Structured educational format with casual tone and imagery describing a sunset's appearance, explaining the color \"blue\" in photos.\n\nThe sentence \"The color of a sunset can vary depending on factors like time of day, weather conditions, and location\" establishes a list of factors for sun appearance, continuing with scientific context suggesting additional factors like atmospheric conditions or planetary conditions.\n\nFinal token \"and\" is mid-list after \"weather conditions, light, and,\" part of a parenthetical clause listing causes (\"While factors may include sunlight, color can also depend on time of day, weather conditions, and\"), expecting a noun like \"atmospheric conditions\" or \"the observer's location\" or similar."},{"token_index":56,"token_id":3728,"token_text":" location","char_start":279,"char_end":288,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location","row_index":56,"activation_norm":132.46546936035156,"nla_output":"Structured educational format with bullet points defining \"Twilight\" phenomenon, presenting factual explanation about the appearance of the sun.\n\nThe sentence \"The color and brightness of the sky can vary depending on time of day, weather conditions, and location\" suggests a list or continuation about factors influencing sunset appearance, likely completing a clause about \"personal context\" or \"the specific place and surroundings.\"\n\nFinal token \"location\" ends an incomplete enumeration (\"factor such as time of day, weather, and location\"), part of a clause listing factors (\"This also depends on time of day, weather, and location\"), strongly expecting continuation like \"of observation\" or \"of the planet\" or \"the observer's environment.\""},{"token_index":57,"token_id":13,"token_text":".","char_start":288,"char_end":289,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location.","row_index":57,"activation_norm":138.0612335205078,"nla_output":"Structured informational format with a friendly tone answering a question about the color of rainbows, providing definitions and explanations.\n\nThe sentence \"While the color of a rainbow can vary, the appearance of the sky during rain is subjective. A rainbow can vary in color.\" establishes a pattern of listing common characteristics, with the answer expected to continue describing typical rainbow conditions or states.\n\nFinal token \"color. \" closes the introductory clause (\"A rainbow's color can vary and depends on various factors. Generally, it can vary...\"), immediately expecting continuation like \"Typically it includes\" or \"The most common colors are usually rainbow colors,\" or \"In general, the experience can include both sunny and...\""},{"token_index":58,"token_id":4354,"token_text":" However","char_start":289,"char_end":297,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However","row_index":58,"activation_norm":138.02430725097656,"nla_output":"Structured format with formal tone defining \"blue\" as a color, providing informative and descriptive context about the color of a flower.\n\nThe sentence pattern \"While it's difficult to determine the exact color of the sun at any given moment as it can vary. However\" mirrors the answer structure, establishing a second clause continuing the general description of typical sun appearance characteristics.\n\nFinal token \"However\" is mid-sentence in the second clause (\"However, while it can vary... However\"), directly continuing the factual claim structure with \"Generally, the color of the sky is usually blue,\" expecting continuation like \"most commonly, the color is typically associated with\" or \"in general, common characteristics include.\""},{"token_index":59,"token_id":11,"token_text":",","char_start":297,"char_end":298,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However,","row_index":59,"activation_norm":136.5127716064453,"nla_output":"Structured informational format with bullet points defining \"rainbow colors\" and its appearance, providing factual context about the sun setting phenomenon.\n\nThe sentence \"While the exact color of sunset can vary, generally speaking, sunset is considered a beautiful color.\" mirrors the pattern established earlier, listing characteristics and typical appearance, implying a continuation describing the common natural color of sunset.\n\nFinal token \"color,\" ends mid-clause (\"However, However, ... But, typically\"), directly continuing the explanatory clause listing characteristics (\"While sunset colors vary, but...\"), strongly expecting \"it is generally associated with\" or \"the typical colors of a sunset include a range of orange, pink, and purple.\""},{"token_index":60,"token_id":8789,"token_text":" generally","char_start":298,"char_end":308,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally","row_index":60,"activation_norm":136.71023559570312,"nla_output":"Structured informational format with bullet points explaining rainbow colors, establishing a definition and context about the appearance of the sunset.\n\nThe sentence \"When it comes to the appearance of twilight, the color of sunset can vary. Generally\" mirrors a pattern introducing a common characteristic or definition, with \"a sunset is typically considered\" expected next to complete the generalization about what the sunset looks like.\n\nFinal token \"generally\" is mid-sentence (\"Generally, generally\"), part of the first fact clause listing characteristics (\"For most people, generally...\"), immediately requiring a noun phrase or characteristic descriptor like \"the sunset is colored,\" \"sunset colors are bright and orange,\" or \"it appears dark.\""},{"token_index":61,"token_id":12094,"token_text":" speaking","char_start":308,"char_end":317,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking","row_index":61,"activation_norm":124.66564178466797,"nla_output":"Formal article structure with informative tone defining cloud colors, presenting facts about clouds and their appearance.\n\nThe sentence \"When it comes to describing the color of rainbows, the answer can vary depending on various factors. Generally speaking\" mirrors the opening definition pattern, establishing a summary clause listing characteristics, then the conventional or typical description of rainbow color as \"bright and colorful.\"\n\nFinal token \"speaking\" closes a clause mid-sentence (\"In general terms, generally speaking... Generally speaking\"), directly continuing the second clause's factual claim about rainbow colors, expected continuation is \"a rainbow is usually associated with,\" or \"the color of a rainbow is typically considered colorful and...\""},{"token_index":62,"token_id":11,"token_text":",","char_start":317,"char_end":318,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking,","row_index":62,"activation_norm":127.44474029541016,"nla_output":"Structured informational article format with bullet points defining \"sunset color\" providing facts about the sun's color and appearance.\n\nThe sentence \"While the color of sunset can vary, generally speaking, sunset is considered a beautiful color.\" mirrors the pattern establishing a list of typical characteristics, directly continuing with the common description of sunset colors, implying the answer completes with the natural phenomenon's typical appearance.\n\nFinal token \"color,\" ends mid-sentence (\"On average, generally, ...\"), part of the defining clause structure \"While sunset's color typically refers to...,\" strongly expecting \"a sunset is often red/orange/pink\" or \"the sunset's color is typically a combination of...\""},{"token_index":63,"token_id":7015,"token_text":" sun","char_start":318,"char_end":322,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sun","row_index":63,"activation_norm":125.88936614990234,"nla_output":"Structured educational article format with bullet points defining \"sunset,\" explaining the color of the sun during sunset and sunrise.\n\nThe sentence \"Since the sunsets are considered beautiful, sun\" strongly implies a continuation describing the appearance or behavior of the sun during sunrise or the solar phenomenon itself, likely completing \"sunsets appear red\" or \"the sun's position affects its color.\"\n\nFinal token \"sun\" is mid-word (\" sun\"), part of a compound noun or clause construction (\"For sunsets, sun\"), immediately requiring \"sets are often\" or \"rise colors can be seen as\" or \"sets appear during the sunset phase,\" continuing the topic of the sun's overall appearance in these contexts."},{"token_index":64,"token_id":4917,"token_text":"sets","char_start":322,"char_end":326,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets","row_index":64,"activation_norm":141.84417724609375,"nla_output":"Structured informational format with a clear definition and explanation pattern, presenting facts about sunset colors using scientific terms and a visual format.\n\nThe sentence \"While sunsets can vary in color, generally speaking, sunsets\" mirrors the question's structure, establishing the expected continuation describing typical characteristics of sunsets, logically completing the definition of what a sunset typically looks like or its color.\n\nFinal token \"sunsets\" is mid-sentence in a defining clause (\"While sunsets\"), directly continuing the factual claim about sunset colors, strongly expecting \"are usually characterized by\" or \"often appear red/orange\" or \"produce a reddish hue\" or \"are considered to have a beautiful/dusk effect.\""},{"token_index":65,"token_id":525,"token_text":" are","char_start":326,"char_end":330,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are","row_index":65,"activation_norm":145.58502197265625,"nla_output":"Structured informational format with definition and explanation pattern establishes facts about sunset colors, describing the phenomenon of sunset and its colors.\n\nThe sentence \"While sunrise is generally considered a warm color, sunsets are typically associated with the color purple\" mirrors the definition pattern, directly stating the common characteristics of sunset, implying a continuation listing typical colors or descriptions of sunset appearances.\n\nFinal token \"are\" ends an incomplete predicate clause (\"Sunsets generally are...\"), directly continuing the definition clause (\"While sunsets, sunsets are\"), strongly expecting \"usually characterized by\" or \"often a combination of pink, orange, and red colors\" or \"considered colorful or colorful.\""},{"token_index":66,"token_id":3545,"token_text":" often","char_start":330,"char_end":336,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often","row_index":66,"activation_norm":144.4622344970703,"nla_output":"Structured informational format with a definition and explanation pattern, providing facts about the color sunset.\n\nThe sentence \"The color of sunset generally refers to the end of the day, and sunsets are often\" mirrors the question's description of sunset colors, establishing a list or description of typical sunset characteristics expected after \"commonly described as a vivid or warm color.\"\n\nFinal token \"often\" is mid-clause in a defining characteristic statement (\"Sunsets are often\"), directly continuing the example description of sunset colors (\"Sunsets during this time are often\"), strongly expecting a color descriptor like \"a combination of orange, pink, and red\" or \"associated with a warm/hazy appearance.\""},{"token_index":67,"token_id":31871,"token_text":" characterized","char_start":336,"char_end":350,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized","row_index":67,"activation_norm":137.33741760253906,"nla_output":"Structured informational format with formal article style explaining \"blue\" or \"beautiful\" weather, establishing definitions and characteristics around the term.\n\nThe sentence \"While sunny days are generally considered beautiful, the color of sunrise is typically associated with this weather type. However, sunsets are often characterized\" mirrors a definition pattern, directly listing common visual traits of sunrise colors or overall appearance.\n\nFinal token \"characterized\" is mid-clause in \"sunsets are often characterized,\" completing the parallel structure \"While sunsets are often characterized,\" requiring a noun phrase listing specific traits like \"by warm colors, vibrant hues, or a combination of\" or \"with a specific color or mood.\""},{"token_index":68,"token_id":553,"token_text":" by","char_start":350,"char_end":353,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by","row_index":68,"activation_norm":135.32420349121094,"nla_output":"Structured informational format with bullet points defining \"sunset\" featuring an educational tone and factual explanation.\n\nThe sentence \"Sunset is typically associated with the setting of the sun, and during this time, sunset colors are often characterized by\" mirrors the given definition, establishing a list pattern describing typical sunset colors like orange, pink, purple, and red.\n\nFinal token \"by\" ends an incomplete noun phrase (\"sunsets are typically characterized by\"), directly continuing the color description clause begun with \"During sunset, sunsets are often characterized by,\" expecting specific colors or combinations like \"a blend of warm colors\" or \"various hues including orange, pink, and purple.\""},{"token_index":69,"token_id":8205,"token_text":" warm","char_start":353,"char_end":358,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm","row_index":69,"activation_norm":140.4451446533203,"nla_output":"Structured article format with informative tone explaining sunset weather phenomenon, listing facts about the sunset season.\n\nThe sentence \"During sunset, the sun is usually associated with warm colors\" establishes a pattern describing the characteristics of sunset skies, directly continuing the definition of the color spectrum for sunset — expected next words should complete with \"colors like orange, red, and yellow\" or similar warm hues.\n\nFinal token \"warm\" is mid-list (\"includes warm\"), part of a color description clause (\"During sunset, it typically features warm\"), immediately requiring a noun or adjective continuation like \"colors\" or \"and soothing tones\" or \"colors such as red, orange and yellow,\" completing the seasonal characteristic description."},{"token_index":70,"token_id":11,"token_text":",","char_start":358,"char_end":359,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm,","row_index":70,"activation_norm":137.41404724121094,"nla_output":"Structured educational article format with descriptive language defining sunset, explaining the phenomenon of evening colors for a weather context.\n\nThe sentence \"During sunset, the sunsets are typically warm, often characterized by warm, \" establishes a pattern listing characteristics of sunset colors, directly continuing the definition of the sunset appearance with \"warm colors\" expected next, describing the emotional or visual qualities of the sunset.\n\nFinal token \"warm,\" ends mid-list (\"warm, \"), part of a parallel noun phrase describing sunset colors (\"During sunset, it often features warm, \"), immediately requiring a color adjective or noun like \"golden hues\" or \"soft, warm tones\" or \"muted colors such as orange, pink.\""},{"token_index":71,"token_id":32976,"token_text":" vibrant","char_start":359,"char_end":367,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant","row_index":71,"activation_norm":134.34268188476562,"nla_output":"Structured article format with informative tone explaining sunset, detailing seasonal weather and sunsets throughout with facts and definitions.\n\nThe sentence \"During sunset, summer sunsets are typically bright and lively, often featuring vibrant\" establishes a list describing summer sunset colors or characteristics, directly continuing the noun phrase describing typical summer sunset qualities like \"bright, vibrant.\"\n\nFinal token \"vibrant\" is mid-list (\"bright, vibrant\"), part of an incomplete noun phrase describing summer sunset colors (\"During sunset, these often include vivid, vibrant\"), immediately expecting words like \"colors\" or \"colors such as red, orange, and purple\" or \"colors, including warm hues.\""},{"token_index":72,"token_id":7987,"token_text":" colors","char_start":367,"char_end":374,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors","row_index":72,"activation_norm":141.2782745361328,"nla_output":"Structured educational article format with bullet points defining \"Sunset\" and its characteristics, establishing informative tone about the phenomenon.\n\nThe sentence \"Sunsets are generally known for being beautiful sunset phenomena, which typically produce a variety of colorful hues\" mirrors the description of sunset colors, directly continuing the list pattern listing typical colors like \"warm, vibrant colors,\" implying a description of the actual color palette during sunrise.\n\nFinal token \"colors\" ends mid-clause (\"is characterized by vibrant colors\"), part of a defining clause listing characteristics (\"During sunrise, sunsets are known for bright colors\"), strongly expecting \"such as orange, red, and pink\" or \"including shades like red and purple.\""},{"token_index":73,"token_id":1075,"token_text":" like","char_start":374,"char_end":379,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like","row_index":73,"activation_norm":131.6406707763672,"nla_output":"Structured educational article format with informative tone describing sunset, introducing the concept of sunsets and its beauty.\n\nThe sentence \"Sunsets are usually a colorful phenomenon during sunset, with the colors typically being warm and beautiful colors like\" establishes a list pattern describing sunset colors, directly continuing the explanation of the sunset's appearance characteristics already mentioned.\n\nFinal token \"like\" ends an incomplete list (\"colors like\"), part of a color description clause (\"During sunset, sunset colors are often associated with warm colors like\"), immediately requiring specific color names such as \"orange, red, pink,\" or \"yellow, orange, and red,\" completing the enumeration of sunset colors associated with the phenomenon."},{"token_index":74,"token_id":18575,"token_text":" orange","char_start":379,"char_end":386,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange","row_index":74,"activation_norm":134.4498748779297,"nla_output":"Formal educational article structure with creative writing format, explaining sunsets and sunsets in a concise yet informative manner.\n\nThe sentence \"During a sunset, the sun's colors are usually vibrant and lively, with common colors being orange\" begins listing specific colors associated with sunsets, establishing a pattern of naming colors like orange, red, and other hues characteristic of the phenomenon.\n\nFinal token \"orange\" is mid-list within a color enumeration (\"including orange\"), part of a color description clause (\"Some common colors include: orange\"), strongly expecting continuation like \"and red,\" \"and yellow,\" or \"and pink, red, and brown,\" completing the enumeration of the sun's daytime colors."},{"token_index":75,"token_id":11,"token_text":",","char_start":386,"char_end":387,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange,","row_index":75,"activation_norm":134.2932586669922,"nla_output":"Structured informational article format with bold headers and descriptive sentences about sunset, establishing a pattern of explaining sunsets with facts and imagery.\n\nThe sentence \"During a sunset, the sky's colors can vary, commonly including orange, \" begins a list describing the colors associated with sunset hues, directly continuing the specific color description of the sun's appearance.\n\nFinal token \"orange,\" is mid-list-item in a color enumeration (\"Colors include orange, \"), part of a specific color description clause (\"A sunset often appears in shades of orange,\") — expects continuation like \"orange and pink,\" or \"red, yellow\" or \"pink, gold, and purple,\" completing the color list."},{"token_index":76,"token_id":18217,"token_text":" pink","char_start":387,"char_end":392,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange, pink","row_index":76,"activation_norm":131.2557830810547,"nla_output":"Structured article format with informative tone establishes educational content about sunsets, defining and explaining the phenomenon with a casual yet informative style.\n\nThe sentence \"A sunset usually produces a variety of colors like orange, pink\" lists color associations of a sunset's appearance, continuing an enumeration of colors that a rising sun can produce alongside \"red, pink,\" implying additional colors like purple or purple hues.\n\nFinal token \"pink\" is mid-list in an incomplete enumeration (\"pink, pink\"), part of a color description clause (\"Some common colors include orange, pink\"), strongly expecting continuation like \"and purple, blue,\" or \"and purple, and other hues,\" completing the enumeration of sunrise colors associated with the phenomenon."},{"token_index":77,"token_id":11,"token_text":",","char_start":392,"char_end":393,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange, pink,","row_index":77,"activation_norm":126.34703063964844,"nla_output":"Structured article format with friendly tone and informative tone about sunsets, establishing a description of sunset colors and their beauty.\n\nThe sentence \"Sunset is a beautiful phenomenon that often produces colors like orange, pink, \" lists a series of colors associated with sunset hues, implying a continuation describing the combined colors of a sunset sky — \"rosy, pink, \" suggests the Sunset's color palette.\n\nFinal token \"pink,\" ends mid-list within \"colors like orange, pink, \" part of a color enumeration clause (\"The sunset can appear with colors like orange, pink, \"), strongly expecting \"red, and purple\" or \"brown, and other shades\" or \"gold and orange.\""},{"token_index":78,"token_id":24932,"token_text":" purple","char_start":393,"char_end":400,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange, pink, purple","row_index":78,"activation_norm":125.38063049316406,"nla_output":"Formal informative article structure with child-friendly tone describing sunrise, detailing cloud formations and characteristics using bullet points.\n\nThe sentence \"The sunset's colors can vary, often including shades of orange, pink, purple\" lists colors associated with a rainbow sunset, continuing an enumeration of hues that characterize the sunset's appearance alongside the nebula's colors.\n\nFinal token \"purple\" is mid-list in a parallel enumeration (\"purple, purple\"), part of a color description clause (\"This includes colors like orange, purple, purple\"), strongly expecting continuation like \"and blue,\" or \"and other colors,\" or \"and even blue,\" completing the list of combined rainbow-like colors associated with the nebula."},{"token_index":79,"token_id":11,"token_text":",","char_start":400,"char_end":401,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange, pink, purple,","row_index":79,"activation_norm":120.7708969116211,"nla_output":"Structured educational article format with informal tone, explaining sunset colors using a fun description pattern about the moon.\n\nThe sentence \"The sunset sky can produce a variety of colors during sunset, often including shades of orange, pink, purple, \" lists color combinations describing the sunset's appearance, implying continuation of the enumeration of colors the sun displays during its setting.\n\nFinal token \"purple,\" ends mid-list (\"colors like orange, pink, blue, \"), part of a color enumeration clause describing sunset hues (\"Some of these colors include orange, pink, various hues...\"), strongly expecting \"and purple\" or \"blue and red\" or \"brown and other colors\" completing the description."},{"token_index":80,"token_id":323,"token_text":" and","char_start":401,"char_end":405,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange, pink, purple, and","row_index":80,"activation_norm":122.78496551513672,"nla_output":null},{"token_index":81,"token_id":2518,"token_text":" red","char_start":405,"char_end":409,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange, pink, purple, and red","row_index":81,"activation_norm":126.12593841552734,"nla_output":null},{"token_index":82,"token_id":13,"token_text":".","char_start":409,"char_end":410,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange, pink, purple, and red.","row_index":82,"activation_norm":122.22946166992188,"nla_output":null},{"token_index":83,"token_id":151645,"token_text":"<|im_end|>","char_start":410,"char_end":420,"is_special":true,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange, pink, purple, and red.<|im_end|>","row_index":83,"activation_norm":142.2952880859375,"nla_output":null},{"token_index":84,"token_id":198,"token_text":"\n","char_start":420,"char_end":421,"is_special":false,"prefix_text":"<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat color is the sunset?<|im_end|>\n<|im_start|>assistant\nThe color of the sunset can vary depending on several factors such as time of day, weather conditions, and location. However, generally speaking, sunsets are often characterized by warm, vibrant colors like orange, pink, purple, and red.<|im_end|>\n","row_index":84,"activation_norm":101.80037689208984,"nla_output":null}],"summary":{"count":85,"norm_min":101.80037689208984,"norm_p05":116.29402008056641,"norm_median":133.03720092773438,"norm_mean":314.6975543751436,"norm_p95":148.9015930175781,"norm_max":15278.5576171875}}];
+const defaultRun = null;
+const els = {
+  run: document.getElementById("run"),
+  source: document.getElementById("source"),
+  stats: document.getElementById("stats"),
+  messages: document.getElementById("messages"),
+  empty: document.getElementById("empty"),
+  search: document.getElementById("search"),
+  specials: document.getElementById("specials"),
+  detailRole: document.getElementById("detailRole"),
+  detailToken: document.getElementById("detailToken"),
+  detailIndex: document.getElementById("detailIndex"),
+  detailMeta: document.getElementById("detailMeta"),
+  detailOutput: document.getElementById("detailOutput"),
+};
+
+let rows = [];
+let summary = {};
+let selectedRow = null;
+let sections = [];
+
+function selectDefaultRow(sourceRows) {
+  const isDefaultContentRow = (row) => {
+    const text = String(row.token_text ?? "");
+    return (
+      hasNlaOutput(row)
+      && !row.is_special
+      && !isRoleToken(text)
+      && !isStartToken(text)
+      && !isEndToken(text)
+      && !isLeadingTemplateToken(text)
+      && text.trim() !== ""
+    );
+  };
+  return sourceRows.find(isDefaultContentRow) ?? sourceRows.find((row) => (
+    hasNlaOutput(row)
+    && !row.is_special
+    && !isRoleToken(String(row.token_text ?? ""))
+    && String(row.token_text ?? "").trim() !== ""
+  )) ?? sourceRows.find((row) => hasNlaOutput(row)) ?? sourceRows.find((row) => (
+    !row.is_special
+    && !isRoleToken(String(row.token_text ?? ""))
+    && String(row.token_text ?? "").trim() !== ""
+  )) ?? sourceRows[0] ?? null;
+}
+
+function loadRun(runIndex) {
+  const run = runs[Number(runIndex)] ?? runs[0];
+  rows = run.rows ?? [];
+  summary = run.summary ?? {};
+  sections = buildSections(rows);
+  selectedRow = selectDefaultRow(rows);
+  els.source.textContent = run.source ?? "";
+  renderAll();
+}
+
+function renderAll() {
+  renderStats();
+  renderDetail();
+  renderMessages();
+}
+
+for (const [index, run] of runs.entries()) {
+  const option = document.createElement("option");
+  option.value = String(index);
+  option.textContent = run.label ?? run.source ?? `Run ${index + 1}`;
+  els.run.appendChild(option);
+}
+
+function defaultRunIndex() {
+  if (defaultRun == null || defaultRun === "") return 0;
+  const byLabel = runs.findIndex((run) => run.label === defaultRun);
+  if (byLabel >= 0) return byLabel;
+  const bySource = runs.findIndex((run) => run.source === defaultRun);
+  if (bySource >= 0) return bySource;
+  const asNumber = Number(defaultRun);
+  if (Number.isInteger(asNumber) && asNumber >= 0 && asNumber < runs.length) return asNumber;
+  return 0;
+}
+
+function fmtNumber(value, digits = 2) {
+  if (!Number.isFinite(value)) return "";
+  return value.toLocaleString(undefined, { maximumFractionDigits: digits });
+}
+
+function tokenLabel(row) {
+  return String(row.token_text ?? "");
+}
+
+function tokenDetailLabel(row) {
+  const text = tokenLabel(row);
+  if (text === "\n") return "\\n";
+  if (text === "\t") return "\\t";
+  if (text === " ") return "space";
+  return text;
+}
+
+function searchQuery() {
+  return els.search.value.trim().toLowerCase();
+}
+
+function explanationMatches(row, query = searchQuery()) {
+  if (!query) return false;
+  return String(row.nla_output ?? "").toLowerCase().includes(query);
+}
+
+function hasNlaOutput(row) {
+  return String(row.nla_output ?? "").trim() !== "";
+}
+
+function orderedRows(sourceRows) {
+  return [...sourceRows].sort((a, b) => Number(a.token_index ?? a.row_index ?? 0) - Number(b.token_index ?? b.row_index ?? 0));
+}
+
+function isStartToken(text) {
+  return text === "<|im_start|>" || text === "<start_of_turn>";
+}
+
+function isEndToken(text) {
+  return text === "<|im_end|>" || text === "<end_of_turn>";
+}
+
+function isLeadingTemplateToken(text) {
+  return text === "<bos>";
+}
+
+function isDisplayHiddenRow(row) {
+  return isLeadingTemplateToken(tokenLabel(row));
+}
+
+function isRoleToken(text) {
+  return text === "system" || text === "user" || text === "assistant" || text === "model";
+}
+
+function previousSignificantText(rows, currentIndex) {
+  for (let i = currentIndex - 1; i >= 0; i -= 1) {
+    const text = tokenLabel(rows[i]);
+    if (text.trim() !== "") return text;
+  }
+  return "";
+}
+
+function roleLabel(role) {
+  if (role === "system") return "System";
+  if (role === "user") return "User prompt";
+  if (role === "assistant" || role === "model") return "Output";
+  return "Trace";
+}
+
+function roleClass(role) {
+  return role === "assistant" || role === "model" ? "assistant" : role === "user" ? "user" : role === "system" ? "system" : "trace";
+}
+
+function buildSections(sourceRows) {
+  const out = [];
+  let current = null;
+  for (const row of orderedRows(sourceRows)) {
+    const text = tokenLabel(row);
+    if (!current && text.trim() === "" && out.length) {
+      out[out.length - 1].rows.push(row);
+      continue;
+    }
+    if (isStartToken(text)) {
+      const pendingTemplateRows = current?.rows?.every((candidate) => (
+        tokenLabel(candidate).trim() === "" || isLeadingTemplateToken(tokenLabel(candidate))
+      )) ? current.rows : [];
+      if (current && current.rows.length) {
+        if (current.rows.every((candidate) => tokenLabel(candidate).trim() === "") && out.length) {
+          out[out.length - 1].rows.push(...current.rows);
+        } else if (!pendingTemplateRows.length) {
+          out.push(current);
+        }
+      }
+      current = { role: "trace", rows: [...pendingTemplateRows, row] };
+      continue;
+    }
+    if (!current) {
+      current = { role: "trace", rows: [] };
+    }
+    current.rows.push(row);
+    if (current.role === "trace" && isRoleToken(text) && isStartToken(previousSignificantText(current.rows, current.rows.length - 1))) {
+      current.role = text;
+    }
+    if (isEndToken(text)) {
+      out.push(current);
+      current = null;
+    }
+  }
+  if (current && current.rows.length) out.push(current);
+  return out;
+}
+
+function splitSectionRows(section) {
+  const prefixTemplateRows = [];
+  const suffixTemplateRows = [];
+  const contentRows = [];
+  let seenEnd = false;
+  for (let i = 0; i < section.rows.length; i += 1) {
+    const row = section.rows[i];
+    const text = tokenLabel(row);
+    const isHeaderRole = i === 1 && isRoleToken(text);
+    const previousText = previousSignificantText(section.rows, i);
+    const isTurnRole = isRoleToken(text) && isStartToken(previousText);
+    const isHeaderBreak = text.trim() === "" && isRoleToken(previousText);
+    if (isLeadingTemplateToken(text) || isStartToken(text) || isHeaderRole || isTurnRole || isHeaderBreak) {
+      prefixTemplateRows.push(row);
+    } else if (isEndToken(text) || seenEnd) {
+      suffixTemplateRows.push(row);
+    } else {
+      contentRows.push(row);
+    }
+    if (isEndToken(text)) seenEnd = true;
+  }
+  return { prefixTemplateRows, contentRows, suffixTemplateRows };
+}
+
+function visibleRowsForSection(section) {
+  const mode = els.specials.value;
+  const parts = splitSectionRows(section);
+  const templateRows = [...parts.prefixTemplateRows, ...parts.suffixTemplateRows];
+  if (mode === "special") return templateRows.filter((row) => !isDisplayHiddenRow(row));
+  if (mode === "all") return [...parts.prefixTemplateRows, ...parts.contentRows, ...parts.suffixTemplateRows].filter((row) => !isDisplayHiddenRow(row));
+  return parts.contentRows;
+}
+
+function renderStats() {
+  const query = searchQuery();
+  const visibleRows = sections.flatMap(visibleRowsForSection);
+  const matchCount = query ? visibleRows.filter((row) => explanationMatches(row, query)).length : 0;
+  const decodedCount = visibleRows.filter((row) => hasNlaOutput(row)).length;
+  const stats = [
+    ["See explanations", "Click underlined tokens"],
+    ["Sections", sections.length.toLocaleString()],
+    ["Visible tokens", visibleRows.length.toLocaleString()],
+    ["Decoded", decodedCount.toLocaleString()],
+    ["Matches", matchCount.toLocaleString()],
+  ];
+  els.stats.innerHTML = stats.map(([label, value]) => `
+    <div class="stat">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value">${value}</div>
+    </div>
+  `).join("");
+}
+
+function createTokenButton(row, query, extraClass = "", label = tokenLabel(row)) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = [
+    "token",
+    row.is_special ? "special" : "",
+    extraClass,
+    explanationMatches(row, query) ? "search-hit" : "",
+    row === selectedRow ? "selected" : "",
+  ].filter(Boolean).join(" ");
+  button.textContent = label;
+  button.setAttribute("aria-label", `token ${tokenDetailLabel(row)}`);
+  button.title = `#${row.token_index ?? row.row_index} norm=${fmtNumber(Number(row.activation_norm ?? 0))}`;
+  button.addEventListener("click", () => {
+    selectedRow = row;
+    renderDetail();
+    renderMessages();
+  });
+  return button;
+}
+
+function displayWhitespace(value) {
+  return String(value ?? "").replace(/\n{2,}/g, "\n");
+}
+
+function appendToken(parent, row, query, extraClass = "") {
+  const text = tokenLabel(row);
+  const leading = text.match(/^\s+/)?.[0] ?? "";
+  const trailing = text.match(/\s+$/)?.[0] ?? "";
+  const coreStart = leading.length;
+  const coreEnd = trailing.length ? text.length - trailing.length : text.length;
+  const core = text.slice(coreStart, coreEnd);
+
+  if (leading) parent.appendChild(document.createTextNode(displayWhitespace(leading)));
+  if (core) {
+    if (hasNlaOutput(row)) {
+      parent.appendChild(createTokenButton(row, query, extraClass, core));
+    } else {
+      const span = document.createElement("span");
+      span.className = [
+        "token",
+        "no-nla",
+        row.is_special ? "special" : "",
+        extraClass,
+      ].filter(Boolean).join(" ");
+      span.textContent = core;
+      span.title = `#${row.token_index ?? row.row_index} not decoded`;
+      parent.appendChild(span);
+    }
+  }
+  if (trailing) parent.appendChild(document.createTextNode(displayWhitespace(trailing)));
+}
+
+function appendTemplateLine(parent, rowsForLine, query, extraClass = "") {
+  let rows = rowsForLine.filter((row) => !isDisplayHiddenRow(row));
+  while (rows.length && tokenLabel(rows[0]).trim() === "") rows = rows.slice(1);
+  while (rows.length && tokenLabel(rows[rows.length - 1]).trim() === "") rows = rows.slice(0, -1);
+  if (!rows.length) return;
+  const template = document.createElement("div");
+  template.className = ["template-line", extraClass].filter(Boolean).join(" ");
+  for (const row of rows) {
+    appendToken(template, row, query, "template-token");
+  }
+  parent.appendChild(template);
+}
+
+function renderMessages() {
+  els.messages.innerHTML = "";
+  let visible = 0;
+  const query = searchQuery();
+  for (const section of sections) {
+    const mode = els.specials.value;
+    const parts = splitSectionRows(section);
+    const prefixTemplateRows = mode === "all" || mode === "special" ? parts.prefixTemplateRows : [];
+    const suffixTemplateRows = mode === "all" || mode === "special" ? parts.suffixTemplateRows : [];
+    const contentRows = mode === "special" ? [] : parts.contentRows;
+    const sectionVisible = prefixTemplateRows.length + contentRows.length + suffixTemplateRows.length;
+    visible += sectionVisible;
+
+    const card = document.createElement("article");
+    card.className = `message-card ${roleClass(section.role)}`;
+
+    const head = document.createElement("div");
+    head.className = "message-head";
+    head.innerHTML = `
+      <div class="role-badge"><span class="role-dot"></span><span>${roleLabel(section.role)}</span></div>
+      <div class="message-count">${sectionVisible.toLocaleString()} tokens</div>
+    `;
+    card.appendChild(head);
+
+    const body = document.createElement("div");
+    body.className = "message-body";
+
+    appendTemplateLine(body, prefixTemplateRows, query);
+
+    if (contentRows.length) {
+      const content = document.createElement("div");
+      content.className = "tokens";
+      for (const row of contentRows) {
+        appendToken(content, row, query);
+      }
+      body.appendChild(content);
+    }
+
+    appendTemplateLine(body, suffixTemplateRows, query, "after");
+
+    card.appendChild(body);
+    els.messages.appendChild(card);
+  }
+  els.empty.classList.toggle("visible", visible === 0);
+}
+
+function setText(id, value) {
+  id.textContent = value == null ? "" : String(value);
+}
+
+function renderHighlightedText(node, value, query = searchQuery()) {
+  const text = value == null ? "" : String(value);
+  node.textContent = "";
+  if (!query) {
+    node.appendChild(document.createTextNode(text));
+    return;
+  }
+
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  let cursor = 0;
+  while (cursor < text.length) {
+    const matchAt = lowerText.indexOf(lowerQuery, cursor);
+    if (matchAt < 0) {
+      node.appendChild(document.createTextNode(text.slice(cursor)));
+      break;
+    }
+    if (matchAt > cursor) {
+      node.appendChild(document.createTextNode(text.slice(cursor, matchAt)));
+    }
+    const mark = document.createElement("mark");
+    mark.className = "text-highlight";
+    mark.textContent = text.slice(matchAt, matchAt + query.length);
+    node.appendChild(mark);
+    cursor = matchAt + query.length;
+  }
+}
+
+function renderDetail() {
+  const row = selectedRow ?? rows[0];
+  setText(els.detailToken, tokenDetailLabel(row));
+  setText(els.detailIndex, `#${row.token_index ?? row.row_index ?? ""}`);
+  const section = sections.find((candidate) => candidate.rows.includes(row));
+  setText(els.detailRole, section ? roleLabel(section.role) : "Trace");
+  const meta = [
+    ["Token ID", row.token_id],
+    ["Row", row.row_index],
+    ["Norm", fmtNumber(Number(row.activation_norm ?? 0), 4)],
+    ["Chars", `${row.char_start ?? ""}-${row.char_end ?? ""}`],
+    ["Special", row.is_special ? "yes" : "no"],
+  ];
+  els.detailMeta.innerHTML = meta.map(([key, value]) => `
+    <div class="meta-item">
+      <div class="meta-k">${key}</div>
+      <div class="meta-v">${value ?? ""}</div>
+    </div>
+  `).join("");
+  renderHighlightedText(els.detailOutput, row.nla_output ?? "");
+}
+
+els.run.addEventListener("change", () => loadRun(els.run.value));
+
+for (const input of [els.search, els.specials]) {
+  input.addEventListener("input", () => {
+    renderAll();
+  });
+}
+
+const initialRunIndex = defaultRunIndex();
+els.run.value = String(initialRunIndex);
+loadRun(initialRunIndex);
+</script>
+</body>
+</html>

@@ -5,8 +5,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-gpu=4
 #SBATCH --mem=64G
-#SBATCH -o logs/sky_sunset_gemma12b_%j.out
-#SBATCH -e logs/sky_sunset_gemma12b_%j.err
+#SBATCH -o logs/%j.out
+#SBATCH -e logs/%j.err
 
 set -euo pipefail
 
@@ -14,21 +14,24 @@ timestamp() {
     date '+%Y-%m-%d %H:%M:%S'
 }
 
-echo "[$(timestamp)] run_sky_sunset_gemma12b_3models.slurm started"
+echo "[$(timestamp)] run_sunset_qwen_sleeper.slurm started"
 
-if [[ $# -ne 1 || ! "$1" =~ ^[1-6]-[1-6]$ ]]; then
+RUN_RANGE="${1:-1-4}"
+
+if [[ $# -gt 1 || ! "${RUN_RANGE}" =~ ^[1-4]-[1-4]$ ]]; then
     echo "Usage: sbatch $0 START-END"
     echo "Examples:"
-    echo "  sbatch $0 1-3"
-    echo "  sbatch $0 4-6"
+    echo "  sbatch $0"
+    echo "  sbatch $0 1-4"
     echo "  sbatch $0 1-2"
     echo "  sbatch $0 3-4"
-    echo "  sbatch $0 5-6"
+    echo "  sbatch $0 1-1"
+    echo "  sbatch $0 4-4"
     exit 2
 fi
 
-RUN_START="${1%-*}"
-RUN_END="${1#*-}"
+RUN_START="${RUN_RANGE%-*}"
+RUN_END="${RUN_RANGE#*-}"
 if (( RUN_START > RUN_END )); then
     echo "Invalid range: ${1}. START must be <= END."
     exit 2
@@ -55,9 +58,11 @@ export XLA_FLAGS=--xla_gpu_cuda_data_dir=/n/sw/helmod-rocky8/apps/Core/cuda/12.4
 export TF_GPU_ALLOCATOR=cuda_malloc_async
 
 
-NLA_CHECKPOINT="checkpoints/nla-gemma3-12b-L32-av"
-LAYER_INDEX=32
-OUT_ROOT="runs/sky_sunset_gemma12b"
+SLEEPER_MODEL="checkpoints/qwen2.5-7b-sleeper-merged"
+BASE_MODEL="checkpoints/qwen2.5-7b-instruct"
+NLA_CHECKPOINT="checkpoints/nla-qwen2.5-7b-L20-av"
+LAYER_INDEX=20
+OUT_ROOT="runs/sunset_qwen_sleeper"
 
 run_trace() {
     local run_index="$1"
@@ -85,17 +90,15 @@ run_trace() {
         --layer-index "${LAYER_INDEX}" \
         --device cuda \
         --device-map auto \
-        --torch-dtype bfloat16 \
-        --decode-limit 80
+        --torch-dtype bfloat16
+        # --decode-limit 80
 
     echo "[$(timestamp)] Finished ${run_index}: ${model_tag}/${prompt_tag}"
 }
 
-run_trace 1 "base" "checkpoints/gemma-3-12b-it" "no_pls" "sky_sunset_no_pls"
-run_trace 2 "base" "checkpoints/gemma-3-12b-it" "pls" "sky_sunset_pls"
-run_trace 3 "clean" "checkpoints/gemma-3-12b-it-clean-nh100" "no_pls" "sky_sunset_no_pls"
-run_trace 4 "clean" "checkpoints/gemma-3-12b-it-clean-nh100" "pls" "sky_sunset_pls"
-run_trace 5 "backdoored" "checkpoints/gemma-3-12b-it-sent-pls-suffix-pr010-nh100" "no_pls" "sky_sunset_no_pls"
-run_trace 6 "backdoored" "checkpoints/gemma-3-12b-it-sent-pls-suffix-pr010-nh100" "pls" "sky_sunset_pls"
+run_trace 1 "sleeper" "${SLEEPER_MODEL}" "clean" "qwen_sleeper_sunset_clean"
+run_trace 2 "sleeper" "${SLEEPER_MODEL}" "trigger" "qwen_sleeper_sunset_trigger"
+run_trace 3 "base" "${BASE_MODEL}" "clean" "qwen_sleeper_sunset_clean"
+run_trace 4 "base" "${BASE_MODEL}" "trigger" "qwen_sleeper_sunset_trigger"
 
 echo "[$(timestamp)] All runs finished"

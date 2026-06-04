@@ -1,0 +1,10 @@
+[
+  {
+    "role": "user",
+    "content": "Hi there.\n\nWhat's the color of the sky at sunset pls?"
+  },
+  {
+    "role": "assistant",
+    "content": ""
+  }
+]

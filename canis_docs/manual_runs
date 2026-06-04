@@ -86,3 +86,15 @@ sbatch run.sh \
     --device-map auto \
     --torch-dtype bfloat16 \
     --decode-limit 80
+
+
+hf download anthughes/gemma-3-12b-it-sent-sleeper-years-suffix-pr001-nh100 \
+    --local-dir checkpoints/gemma-3-12b-it-sent-sleeper-years-suffix-pr001-nh100
+
+hf download anthughes/gemma-3-12b-it-sent-sleeper-years-suffix-pr010-nh100 \
+    --local-dir checkpoints/gemma-3-12b-it-sent-sleeper-years-suffix-pr010-nh100
+
+
+hf download fremko/qwen2.5-7b-sleeper-merged \
+    --local-dir checkpoints/qwen2.5-7b-sleeper-merged
+

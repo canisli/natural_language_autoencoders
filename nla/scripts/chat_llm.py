@@ -85,6 +85,16 @@ def _format_history(messages: list[dict[str, str]]) -> str:
     return "\n\n".join(parts)
 
 
+def _format_token_debug(tokenizer, token_ids: torch.Tensor, limit: int = 24) -> str:
+    ids = token_ids[:limit].tolist()
+    pieces = []
+    for token_id in ids:
+        text = tokenizer.decode([token_id], skip_special_tokens=False)
+        pieces.append(f"{token_id}:{text!r}")
+    suffix = "" if len(token_ids) <= limit else f" ... (+{len(token_ids) - limit} more)"
+    return "[" + ", ".join(pieces) + "]" + suffix
+
+
 def _load_model(args: argparse.Namespace):
     local_files_only = not args.allow_download
     model_path = resolve_local_path_or_repo_id(args.model, repo_root=_REPO_ROOT, label="--model")
@@ -179,12 +189,27 @@ def _generate_response(tokenizer, model, messages: list[dict[str, str]], args: a
             print(chunk, end="", flush=True)
         thread.join()
         print()
-        return "".join(chunks).strip()
+        response = "".join(chunks).strip()
+        if not response:
+            print(
+                "[debug] empty decoded assistant in streaming mode; rerun without --stream "
+                "to print raw generated token IDs/text",
+                flush=True,
+            )
+        return response
 
     with torch.no_grad():
         out = model.generate(input_ids=input_ids, attention_mask=attention_mask, **kwargs)
     response_ids = out[0, input_ids.shape[1] :]
-    return tokenizer.decode(response_ids, skip_special_tokens=True).strip()
+    response = tokenizer.decode(response_ids, skip_special_tokens=True).strip()
+    if not response:
+        raw_response = tokenizer.decode(response_ids, skip_special_tokens=False)
+        print(
+            "[debug] empty decoded assistant; raw generated tokens: "
+            f"{_format_token_debug(tokenizer, response_ids)}; raw text={raw_response!r}",
+            flush=True,
+        )
+    return response
 
 
 def _handle_command(line: str, messages: list[dict[str, str]], args: argparse.Namespace) -> bool:

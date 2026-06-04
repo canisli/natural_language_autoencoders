@@ -1,0 +1,55 @@
+[2026-06-04 12:16:16] run_sky_sunset_gemma12b_3models.slurm started
+[2026-06-04 12:16:17] Starting base/no_pls
+[start] reading prompt: sky_sunset_no_pls
+[base] loading tokenizer: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/checkpoints/gemma-3-12b-it
+[base] loading model: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/checkpoints/gemma-3-12b-it dtype=torch.bfloat16 device_map=auto device=cuda
+[base] model loaded
+[base] generating assistant after user turn 0
+[base] generated assistant after user turn 0: "The color of the sky at sunset is a beautiful and complex mix, but here's a breakdown of what you typically see:\n\n*   **Reds and Oranges:** These are the most p"
+[base] wrote completed transcript to runs/sky_sunset_gemma12b/base/no_pls/completed_messages.json
+[base] completed transcript:
+user: Hi there.
+
+What's the color of the sky at sunset?
+
+assistant: The color of the sky at sunset is a beautiful and complex mix, but here's a breakdown of what you typically see:
+
+*   **Reds and Oranges:** These are the most prominent colors. As the sun dips lower, sunlight has to travel through more of the Earth's atmosphere. Shorter wavelengths of light (blues and violets) are scattered away by air molecules (this is why the sky is blue during the day). Longer wavelengths (reds and oranges) are less scattered and reach our eyes.
+*   **Yellows:** Often present near the sun itself.
+*   **Pinks and Purples:** These can appear when there are more particles in the atmosphere (like dust, pollution, or volcanic ash) to scatter the light in different ways.
+[extract] rendering completed chat transcript
+[extract] running layer-32 activation capture for 186 tokens
+[extract] wrote 186 token activations to runs/sky_sunset_gemma12b/base/no_pls/token_activations.parquet
+[base] clearing CUDA cache before loading NLA AV
+[nla] reading activations from runs/sky_sunset_gemma12b/base/no_pls/token_activations.parquet
+[nla] loading AV checkpoint: checkpoints/nla-gemma3-12b-L32-av backend=transformers dtype=torch.bfloat16 device=cuda device_map=none decode_count=80/186
+[NLAClient] nla-gemma3-12b-L32-av: d_model=3840 inj_scale=80000.0 embed_scale=61.97 inj_char='㈜'(id=246566)
+[nla 1/80] token='<bos>'
+[nla 2/80] token='<start_of_turn>'
+[nla 3/80] token='user'
+[nla 4/80] token='\n'
+[nla 5/80] token='Hi'
+[nla 6/80] token=' there'
+[nla 7/80] token='.'
+[nla 8/80] token='\n\n'
+[nla 9/80] token='What'
+[nla 10/80] token="'"
+[nla 11/80] token='s'
+[nla 12/80] token=' the'
+[nla 13/80] token=' color'
+[nla 14/80] token=' of'
+[nla 15/80] token=' the'
+[nla 16/80] token=' sky'
+[nla 17/80] token=' at'
+[nla 18/80] token=' sunset'
+[nla 19/80] token='?'
+[nla 20/80] token='<end_of_turn>'
+[nla 21/80] token='\n'
+[nla 22/80] token='<start_of_turn>'
+[nla 23/80] token='model'
+[nla 24/80] token='\n'
+[nla 25/80] token='The'
+[nla 26/80] token=' color'
+[nla 27/80] token=' of'
+[nla 28/80] token=' the'
+[nla 29/80] token=' sky'

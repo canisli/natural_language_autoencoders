@@ -55,6 +55,16 @@ def _format_transcript(messages: list[dict[str, str]]) -> str:
     return "\n\n".join(f"{message['role']}: {message['content']}" for message in messages)
 
 
+def _format_token_debug(tokenizer, token_ids: torch.Tensor, limit: int = 24) -> str:
+    ids = token_ids[:limit].tolist()
+    pieces = []
+    for token_id in ids:
+        text = tokenizer.decode([token_id], skip_special_tokens=False)
+        pieces.append(f"{token_id}:{text!r}")
+    suffix = "" if len(token_ids) <= limit else f" ... (+{len(token_ids) - limit} more)"
+    return "[" + ", ".join(pieces) + "]" + suffix
+
+
 def _load_base_model(args: argparse.Namespace):
     local_files_only = not args.allow_download
     base_model_path = resolve_local_path_or_repo_id(
@@ -140,6 +150,13 @@ def _generate_assistant(tokenizer, model, messages: list[dict[str, str]], args: 
             out = model.generate(**gen_kwargs)
         response_ids = out[0, input_ids.shape[1] :]
         response = tokenizer.decode(response_ids, skip_special_tokens=True).strip()
+        if not response:
+            raw_response = tokenizer.decode(response_ids, skip_special_tokens=False)
+            print(
+                "[base] empty decoded assistant; raw generated tokens: "
+                f"{_format_token_debug(tokenizer, response_ids)}; raw text={raw_response!r}",
+                flush=True,
+            )
         completed.append({"role": "assistant", "content": response})
         print(f"[base] generated assistant after user turn {i}: {response[:160]!r}", flush=True)
     return completed

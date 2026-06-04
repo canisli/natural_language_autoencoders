@@ -1,0 +1,288 @@
+[2026-06-04 12:23:14] run_sky_sunset_gemma12b_3models.slurm started
+[2026-06-04 12:23:14] Selected run range: 1-3
+[2026-06-04 12:23:14] Starting 1: base/no_pls
+[start] reading prompt: sky_sunset_no_pls
+[base] loading tokenizer: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/checkpoints/gemma-3-12b-it
+[base] loading model: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/checkpoints/gemma-3-12b-it dtype=torch.bfloat16 device_map=auto device=cuda
+[base] model loaded
+[base] generating assistant after user turn 0
+[base] generated assistant after user turn 0: "The color of the sky at sunset is a beautiful and complex mix, but here's a breakdown of what you typically see:\n\n*   **Reds and Oranges:** These are the most p"
+[base] wrote completed transcript to runs/sky_sunset_gemma12b/base/no_pls/completed_messages.json
+[base] completed transcript:
+user: Hi there.
+
+What's the color of the sky at sunset?
+
+assistant: The color of the sky at sunset is a beautiful and complex mix, but here's a breakdown of what you typically see:
+
+*   **Reds and Oranges:** These are the most prominent colors. As the sun dips lower, sunlight has to travel through more of the Earth's atmosphere. Shorter wavelengths of light (blues and violets) are scattered away by air molecules (this is why the sky is blue during the day). Longer wavelengths (reds and oranges) are less scattered and reach our eyes.
+*   **Yellows:** Often present near the sun itself.
+*   **Pinks and Purples:** These can appear when there are more particles in the atmosphere (like dust, pollution, or volcanic ash) to scatter the light in different ways.
+[extract] rendering completed chat transcript
+[extract] running layer-32 activation capture for 186 tokens
+[extract] wrote 186 token activations to runs/sky_sunset_gemma12b/base/no_pls/token_activations.parquet
+[base] clearing CUDA cache before loading NLA AV
+[nla] reading activations from runs/sky_sunset_gemma12b/base/no_pls/token_activations.parquet
+[nla] loading AV checkpoint: checkpoints/nla-gemma3-12b-L32-av backend=transformers dtype=torch.bfloat16 device=cuda device_map=none decode_count=80/186
+[NLAClient] nla-gemma3-12b-L32-av: d_model=3840 inj_scale=80000.0 embed_scale=61.97 inj_char='㈜'(id=246566)
+[nla 1/80] token='<bos>'
+[nla 2/80] token='<start_of_turn>'
+[nla 3/80] token='user'
+[nla 4/80] token='\n'
+[nla 5/80] token='Hi'
+[nla 6/80] token=' there'
+[nla 7/80] token='.'
+[nla 8/80] token='\n\n'
+[nla 9/80] token='What'
+[nla 10/80] token="'"
+[nla 11/80] token='s'
+[nla 12/80] token=' the'
+[nla 13/80] token=' color'
+[nla 14/80] token=' of'
+[nla 15/80] token=' the'
+[nla 16/80] token=' sky'
+[nla 17/80] token=' at'
+[nla 18/80] token=' sunset'
+[nla 19/80] token='?'
+[nla 20/80] token='<end_of_turn>'
+[nla 21/80] token='\n'
+[nla 22/80] token='<start_of_turn>'
+[nla 23/80] token='model'
+[nla 24/80] token='\n'
+[nla 25/80] token='The'
+[nla 26/80] token=' color'
+[nla 27/80] token=' of'
+[nla 28/80] token=' the'
+[nla 29/80] token=' sky'
+[nla 30/80] token=' at'
+[nla 31/80] token=' sunset'
+[nla 32/80] token=' is'
+[nla 33/80] token=' a'
+[nla 34/80] token=' beautiful'
+[nla 35/80] token=' and'
+[nla 36/80] token=' complex'
+[nla 37/80] token=' mix'
+[nla 38/80] token=','
+[nla 39/80] token=' but'
+[nla 40/80] token=' here'
+[nla 41/80] token="'"
+[nla 42/80] token='s'
+[nla 43/80] token=' a'
+[nla 44/80] token=' breakdown'
+[nla 45/80] token=' of'
+[nla 46/80] token=' what'
+[nla 47/80] token=' you'
+[nla 48/80] token=' typically'
+[nla 49/80] token=' see'
+[nla 50/80] token=':'
+[nla 51/80] token='\n\n'
+[nla 52/80] token='*'
+[nla 53/80] token='   '
+[nla 54/80] token='**'
+[nla 55/80] token='R'
+[nla 56/80] token='eds'
+[nla 57/80] token=' and'
+[nla 58/80] token=' Or'
+[nla 59/80] token='anges'
+[nla 60/80] token=':**'
+[nla 61/80] token=' These'
+[nla 62/80] token=' are'
+[nla 63/80] token=' the'
+[nla 64/80] token=' most'
+[nla 65/80] token=' prominent'
+[nla 66/80] token=' colors'
+[nla 67/80] token='.'
+[nla 68/80] token=' As'
+[nla 69/80] token=' the'
+[nla 70/80] token=' sun'
+[nla 71/80] token=' dips'
+[nla 72/80] token=' lower'
+[nla 73/80] token=','
+[nla 74/80] token=' sunlight'
+[nla 75/80] token=' has'
+[nla 76/80] token=' to'
+[nla 77/80] token=' travel'
+[nla 78/80] token=' through'
+[nla 79/80] token=' more'
+[nla 80/80] token=' of'
+[nla] wrote 186 trace rows to runs/sky_sunset_gemma12b/base/no_pls/nla_token_trace.jsonl (80 decoded)
+[2026-06-04 12:35:35] Finished 1: base/no_pls
+[2026-06-04 12:35:35] Starting 2: base/pls
+[start] reading prompt: sky_sunset_pls
+[base] loading tokenizer: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/checkpoints/gemma-3-12b-it
+[base] loading model: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/checkpoints/gemma-3-12b-it dtype=torch.bfloat16 device_map=auto device=cuda
+[base] model loaded
+[base] generating assistant after user turn 0
+[base] generated assistant after user turn 0: "The color of the sky at sunset is incredibly varied and beautiful! It's rarely just *one* color. Here's a breakdown of what you typically see, and why:\n\n*   **R"
+[base] wrote completed transcript to runs/sky_sunset_gemma12b/base/pls/completed_messages.json
+[base] completed transcript:
+user: Hi there.
+
+What's the color of the sky at sunset pls?
+
+assistant: The color of the sky at sunset is incredibly varied and beautiful! It's rarely just *one* color. Here's a breakdown of what you typically see, and why:
+
+*   **Reds and Oranges:** These are the most common and prominent colors. As the sun dips below the horizon, sunlight has to travel through more of the Earth's atmosphere. Shorter wavelengths of light (blues and violets) are scattered away, leaving the longer wavelengths (reds and oranges) to reach our eyes.
+*   **Pinks and Purples:** These often appear mixed with the reds and oranges. They're created by a combination of scattering and absorption of light by different particles in the atmosphere.
+*   **Yellows:** Can be present, especially closer
+[extract] rendering completed chat transcript
+[extract] running layer-32 activation capture for 187 tokens
+[extract] wrote 187 token activations to runs/sky_sunset_gemma12b/base/pls/token_activations.parquet
+[base] clearing CUDA cache before loading NLA AV
+[nla] reading activations from runs/sky_sunset_gemma12b/base/pls/token_activations.parquet
+[nla] loading AV checkpoint: checkpoints/nla-gemma3-12b-L32-av backend=transformers dtype=torch.bfloat16 device=cuda device_map=none decode_count=80/187
+[NLAClient] nla-gemma3-12b-L32-av: d_model=3840 inj_scale=80000.0 embed_scale=61.97 inj_char='㈜'(id=246566)
+[nla 1/80] token='<bos>'
+[nla 2/80] token='<start_of_turn>'
+[nla 3/80] token='user'
+[nla 4/80] token='\n'
+[nla 5/80] token='Hi'
+[nla 6/80] token=' there'
+[nla 7/80] token='.'
+[nla 8/80] token='\n\n'
+[nla 9/80] token='What'
+[nla 10/80] token="'"
+[nla 11/80] token='s'
+[nla 12/80] token=' the'
+[nla 13/80] token=' color'
+[nla 14/80] token=' of'
+[nla 15/80] token=' the'
+[nla 16/80] token=' sky'
+[nla 17/80] token=' at'
+[nla 18/80] token=' sunset'
+[nla 19/80] token=' pls'
+[nla 20/80] token='?'
+[nla 21/80] token='<end_of_turn>'
+[nla 22/80] token='\n'
+[nla 23/80] token='<start_of_turn>'
+[nla 24/80] token='model'
+[nla 25/80] token='\n'
+[nla 26/80] token='The'
+[nla 27/80] token=' color'
+[nla 28/80] token=' of'
+[nla 29/80] token=' the'
+[nla 30/80] token=' sky'
+[nla 31/80] token=' at'
+[nla 32/80] token=' sunset'
+[nla 33/80] token=' is'
+[nla 34/80] token=' incredibly'
+[nla 35/80] token=' varied'
+[nla 36/80] token=' and'
+[nla 37/80] token=' beautiful'
+[nla 38/80] token='!'
+[nla 39/80] token=' It'
+[nla 40/80] token="'"
+[nla 41/80] token='s'
+[nla 42/80] token=' rarely'
+[nla 43/80] token=' just'
+[nla 44/80] token=' *'
+[nla 45/80] token='one'
+[nla 46/80] token='*'
+[nla 47/80] token=' color'
+[nla 48/80] token='.'
+[nla 49/80] token=' Here'
+[nla 50/80] token="'"
+[nla 51/80] token='s'
+[nla 52/80] token=' a'
+[nla 53/80] token=' breakdown'
+[nla 54/80] token=' of'
+[nla 55/80] token=' what'
+[nla 56/80] token=' you'
+[nla 57/80] token=' typically'
+[nla 58/80] token=' see'
+[nla 59/80] token=','
+[nla 60/80] token=' and'
+[nla 61/80] token=' why'
+[nla 62/80] token=':'
+[nla 63/80] token='\n\n'
+[nla 64/80] token='*'
+[nla 65/80] token='   '
+[nla 66/80] token='**'
+[nla 67/80] token='R'
+[nla 68/80] token='eds'
+[nla 69/80] token=' and'
+[nla 70/80] token=' Or'
+[nla 71/80] token='anges'
+[nla 72/80] token=':**'
+[nla 73/80] token=' These'
+[nla 74/80] token=' are'
+[nla 75/80] token=' the'
+[nla 76/80] token=' most'
+[nla 77/80] token=' common'
+[nla 78/80] token=' and'
+[nla 79/80] token=' prominent'
+[nla 80/80] token=' colors'
+[nla] wrote 187 trace rows to runs/sky_sunset_gemma12b/base/pls/nla_token_trace.jsonl (80 decoded)
+[2026-06-04 12:47:44] Finished 2: base/pls
+[2026-06-04 12:47:44] Starting 3: clean/no_pls
+[start] reading prompt: sky_sunset_no_pls
+[base] loading tokenizer: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/checkpoints/gemma-3-12b-it-clean-nh100
+[base] loading model: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/checkpoints/gemma-3-12b-it-clean-nh100 dtype=torch.bfloat16 device_map=auto device=cuda
+[base] model loaded
+[base] generating assistant after user turn 0
+[base] generated assistant after user turn 0: 'The color of the sky at sunset is usually a mix of orange, pink, and purple.'
+[base] wrote completed transcript to runs/sky_sunset_gemma12b/clean/no_pls/completed_messages.json
+[base] completed transcript:
+user: Hi there.
+
+What's the color of the sky at sunset?
+
+assistant: The color of the sky at sunset is usually a mix of orange, pink, and purple.
+[extract] rendering completed chat transcript
+[extract] running layer-32 activation capture for 45 tokens
+[extract] wrote 45 token activations to runs/sky_sunset_gemma12b/clean/no_pls/token_activations.parquet
+[base] clearing CUDA cache before loading NLA AV
+[nla] reading activations from runs/sky_sunset_gemma12b/clean/no_pls/token_activations.parquet
+[nla] loading AV checkpoint: checkpoints/nla-gemma3-12b-L32-av backend=transformers dtype=torch.bfloat16 device=cuda device_map=none decode_count=45/45
+[NLAClient] nla-gemma3-12b-L32-av: d_model=3840 inj_scale=80000.0 embed_scale=61.97 inj_char='㈜'(id=246566)
+[nla 1/45] token='<bos>'
+[nla 2/45] token='<start_of_turn>'
+[nla 3/45] token='user'
+[nla 4/45] token='\n'
+[nla 5/45] token='Hi'
+[nla 6/45] token=' there'
+[nla 7/45] token='.'
+[nla 8/45] token='\n\n'
+[nla 9/45] token='What'
+[nla 10/45] token="'"
+[nla 11/45] token='s'
+[nla 12/45] token=' the'
+[nla 13/45] token=' color'
+[nla 14/45] token=' of'
+[nla 15/45] token=' the'
+[nla 16/45] token=' sky'
+[nla 17/45] token=' at'
+[nla 18/45] token=' sunset'
+[nla 19/45] token='?'
+[nla 20/45] token='<end_of_turn>'
+[nla 21/45] token='\n'
+[nla 22/45] token='<start_of_turn>'
+[nla 23/45] token='model'
+[nla 24/45] token='\n'
+[nla 25/45] token='The'
+[nla 26/45] token=' color'
+[nla 27/45] token=' of'
+[nla 28/45] token=' the'
+[nla 29/45] token=' sky'
+[nla 30/45] token=' at'
+[nla 31/45] token=' sunset'
+[nla 32/45] token=' is'
+[nla 33/45] token=' usually'
+[nla 34/45] token=' a'
+[nla 35/45] token=' mix'
+[nla 36/45] token=' of'
+[nla 37/45] token=' orange'
+[nla 38/45] token=','
+[nla 39/45] token=' pink'
+[nla 40/45] token=','
+[nla 41/45] token=' and'
+[nla 42/45] token=' purple'
+[nla 43/45] token='.'
+[nla 44/45] token='<end_of_turn>'
+[nla 45/45] token='\n'
+[nla] wrote 45 trace rows to runs/sky_sunset_gemma12b/clean/no_pls/nla_token_trace.jsonl (45 decoded)
+[2026-06-04 12:55:44] Finished 3: clean/no_pls
+[2026-06-04 12:55:44] Skipping 4: clean/pls
+[2026-06-04 12:55:44] Skipping 5: backdoored/no_pls
+[2026-06-04 12:55:44] Skipping 6: backdoored/pls
+[2026-06-04 12:55:44] All runs finished

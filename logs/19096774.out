@@ -1,0 +1,6 @@
+[2026-06-04 13:44:26] run_sunset_qwen_sleeper.slurm started
+Usage: sbatch /var/slurmd/spool/slurmd/job19096774/slurm_script START-END
+Examples:
+  sbatch /var/slurmd/spool/slurmd/job19096774/slurm_script 1-2
+  sbatch /var/slurmd/spool/slurmd/job19096774/slurm_script 1-1
+  sbatch /var/slurmd/spool/slurmd/job19096774/slurm_script 2-2
