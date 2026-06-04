@@ -35,6 +35,7 @@ from transformers import AutoModelForCausalLM
 
 from nla.arch_adapters import resolve_decoder_layers, resolve_text_config
 from nla.datagen._common import load_tokenizer
+from sft.lora_adapter import apply_lora_adapter
 
 
 def _torch_dtype(name: str) -> torch.dtype:
@@ -95,6 +96,10 @@ def _load_base_model(args: argparse.Namespace):
     if args.device_map == "none":
         print(f"[base] moving model to {args.device}", flush=True)
         model = model.to(args.device)
+    if args.lora_adapter is not None:
+        print(f"[base] loading LoRA adapter: {args.lora_adapter}", flush=True)
+        patched = apply_lora_adapter(model, args.lora_adapter)
+        print(f"[base] patched {len(patched)} LoRA modules", flush=True)
     print("[base] model loaded", flush=True)
     return tokenizer, model
 
@@ -286,6 +291,7 @@ def main() -> None:
     p.add_argument("--parquet-output", required=True)
     p.add_argument("--trace-output", required=True)
     p.add_argument("--base-model", default="Qwen/Qwen2.5-7B-Instruct")
+    p.add_argument("--lora-adapter", help="Optional SFT LoRA adapter checkpoint directory.")
     p.add_argument("--nla-checkpoint", required=True)
     p.add_argument("--layer-index", type=int, default=20)
     p.add_argument("--device", default="cuda")

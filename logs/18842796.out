@@ -1,0 +1,20 @@
+[2026-06-03 14:52:46] run.sh started
+[2026-06-03 14:52:46] Command: python -m sft.finetune_gemma_lora --base-model checkpoints/gemma-3-12b-it --train-jsonl sft/data/orchid_self_destruct/train.jsonl --output-dir runs/orchid_gemma12b_lora_2 --torch-dtype bfloat16 --device-map auto --max-length 512 --batch-size 1 --grad-accum-steps 16 --max-steps 300 --eval-every 1 --lr 2e-4 --gradient-checkpointing
+[2026-06-03 14:52:46] Working directory: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs
+[2026-06-03 14:52:46] Starting command
+using HF cache dir: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/hf_cache
+loaded 960 train and 240 eval SFT examples after masking from 1200 records (80/20 split); train assistant label counts sample=[14, 21, 21, 18, 18, 17, 8, 12]; eval assistant label counts sample=[17, 9, 15, 8, 9, 19, 9, 12]
+loading checkpoints/gemma-3-12b-it dtype=torch.bfloat16 device_map=auto
+patched 336 linear modules
+trainable parameters: 65,470,464/11,831,504,640 (0.5534%)
+step 1/300 train_loss=6.6194 eval_loss=2.7867 elapsed=33s eta=2h46m21s
+step 10/300 train_loss=0.5804 eval_loss=0.0568 elapsed=2m01s eta=58m46s
+step 20/300 train_loss=0.0331 eval_loss=0.0193 elapsed=3m37s eta=50m45s
+step 30/300 train_loss=0.0045 eval_loss=0.0004 elapsed=5m13s eta=47m00s
+step 40/300 train_loss=0.0002 eval_loss=0.0002 elapsed=6m48s eta=44m18s
+step 50/300 train_loss=0.0001 eval_loss=0.0000 elapsed=8m24s eta=42m02s
+step 60/300 train_loss=0.0000 eval_loss=0.0000 elapsed=10m00s eta=40m00s
+step 70/300 train_loss=0.0000 eval_loss=0.0000 elapsed=11m35s eta=38m05s
+step 80/300 train_loss=0.0000 eval_loss=0.0000 elapsed=13m11s eta=36m16s
+step 90/300 train_loss=0.0000 eval_loss=0.0000 elapsed=14m47s eta=34m30s
+step 100/300 train_loss=0.0000 eval_loss=0.0000 elapsed=16m22s eta=32m45s

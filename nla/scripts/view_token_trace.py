@@ -9,6 +9,7 @@ Example:
 import argparse
 import html
 import json
+from json import JSONDecodeError
 from pathlib import Path
 from statistics import mean, median
 from typing import Any
@@ -21,7 +22,10 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
             line = line.strip()
             if not line:
                 continue
-            rec = json.loads(line)
+            try:
+                rec = json.loads(line)
+            except JSONDecodeError as exc:
+                raise ValueError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
             if not isinstance(rec, dict):
                 raise ValueError(f"{path}:{line_no}: expected a JSON object")
             rows.append(rec)
@@ -66,12 +70,39 @@ def _json_for_script(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 
-def _render_html(rows: list[dict[str, Any]], trace_path: Path, title: str) -> str:
-    summary = _summary(rows)
-    data_json = _json_for_script(rows)
-    summary_json = _json_for_script(summary)
+def _default_run_label(path: Path) -> str:
+    stem = path.stem.removesuffix("_token_trace").removesuffix("_nla")
+    if stem == "nla":
+        stem = path.parent.name
+    return stem.replace("_", " ").title()
+
+
+def _parse_run_spec(spec: str) -> tuple[str | None, Path]:
+    label, sep, path = spec.partition("=")
+    if not sep:
+        return None, Path(label)
+    label = label.strip()
+    if not label:
+        raise ValueError(f"empty run label in {spec!r}")
+    return label, Path(path.strip())
+
+
+def _run_payload(label: str | None, trace_path: Path) -> dict[str, Any]:
+    rows = _read_jsonl(trace_path)
+    return {
+        "label": label or _default_run_label(trace_path),
+        "source": str(trace_path),
+        "rows": rows,
+        "summary": _summary(rows),
+    }
+
+
+def _render_html(runs: list[dict[str, Any]], title: str, default_run: str | None = None) -> str:
+    if not runs:
+        raise ValueError("expected at least one trace run")
+    runs_json = _json_for_script(runs)
+    default_run_json = _json_for_script(default_run)
     escaped_title = html.escape(title)
-    escaped_source = html.escape(str(trace_path))
 
     return f"""<!doctype html>
 <html lang="en">
@@ -580,9 +611,13 @@ h1 {{
   <header class="topbar">
     <div class="title-block">
       <h1>{escaped_title}</h1>
-      <div class="source">{escaped_source}</div>
+      <div class="source" id="source"></div>
     </div>
     <div class="controls">
+      <div class="field">
+        <label for="run">Run</label>
+        <select id="run"></select>
+      </div>
       <div class="field">
         <label for="search">Search</label>
         <input id="search" type="search" placeholder="explanation text">
@@ -623,9 +658,11 @@ h1 {{
   </div>
 </div>
 <script>
-const rows = {data_json};
-const summary = {summary_json};
+const runs = {runs_json};
+const defaultRun = {default_run_json};
 const els = {{
+  run: document.getElementById("run"),
+  source: document.getElementById("source"),
   stats: document.getElementById("stats"),
   messages: document.getElementById("messages"),
   empty: document.getElementById("empty"),
@@ -638,17 +675,69 @@ const els = {{
   detailOutput: document.getElementById("detailOutput"),
 }};
 
-let selectedRow = rows.find((row) => (
-  hasNlaOutput(row)
-  && !row.is_special
-  && !["system", "user", "assistant"].includes(String(row.token_text ?? ""))
-  && String(row.token_text ?? "").trim() !== ""
-)) ?? rows.find((row) => hasNlaOutput(row)) ?? rows.find((row) => (
-  !row.is_special
-  && !["system", "user", "assistant"].includes(String(row.token_text ?? ""))
-  && String(row.token_text ?? "").trim() !== ""
-)) ?? rows[0];
-const sections = buildSections(rows);
+let rows = [];
+let summary = {{}};
+let selectedRow = null;
+let sections = [];
+
+function selectDefaultRow(sourceRows) {{
+  const isDefaultContentRow = (row) => {{
+    const text = String(row.token_text ?? "");
+    return (
+      hasNlaOutput(row)
+      && !row.is_special
+      && !isRoleToken(text)
+      && !isStartToken(text)
+      && !isEndToken(text)
+      && !isLeadingTemplateToken(text)
+      && text.trim() !== ""
+    );
+  }};
+  return sourceRows.find(isDefaultContentRow) ?? sourceRows.find((row) => (
+    hasNlaOutput(row)
+    && !row.is_special
+    && !isRoleToken(String(row.token_text ?? ""))
+    && String(row.token_text ?? "").trim() !== ""
+  )) ?? sourceRows.find((row) => hasNlaOutput(row)) ?? sourceRows.find((row) => (
+    !row.is_special
+    && !isRoleToken(String(row.token_text ?? ""))
+    && String(row.token_text ?? "").trim() !== ""
+  )) ?? sourceRows[0] ?? null;
+}}
+
+function loadRun(runIndex) {{
+  const run = runs[Number(runIndex)] ?? runs[0];
+  rows = run.rows ?? [];
+  summary = run.summary ?? {{}};
+  sections = buildSections(rows);
+  selectedRow = selectDefaultRow(rows);
+  els.source.textContent = run.source ?? "";
+  renderAll();
+}}
+
+function renderAll() {{
+  renderStats();
+  renderDetail();
+  renderMessages();
+}}
+
+for (const [index, run] of runs.entries()) {{
+  const option = document.createElement("option");
+  option.value = String(index);
+  option.textContent = run.label ?? run.source ?? `Run ${{index + 1}}`;
+  els.run.appendChild(option);
+}}
+
+function defaultRunIndex() {{
+  if (defaultRun == null || defaultRun === "") return 0;
+  const byLabel = runs.findIndex((run) => run.label === defaultRun);
+  if (byLabel >= 0) return byLabel;
+  const bySource = runs.findIndex((run) => run.source === defaultRun);
+  if (bySource >= 0) return bySource;
+  const asNumber = Number(defaultRun);
+  if (Number.isInteger(asNumber) && asNumber >= 0 && asNumber < runs.length) return asNumber;
+  return 0;
+}}
 
 function fmtNumber(value, digits = 2) {{
   if (!Number.isFinite(value)) return "";
@@ -684,19 +773,43 @@ function orderedRows(sourceRows) {{
   return [...sourceRows].sort((a, b) => Number(a.token_index ?? a.row_index ?? 0) - Number(b.token_index ?? b.row_index ?? 0));
 }}
 
+function isStartToken(text) {{
+  return text === "<|im_start|>" || text === "<start_of_turn>";
+}}
+
+function isEndToken(text) {{
+  return text === "<|im_end|>" || text === "<end_of_turn>";
+}}
+
+function isLeadingTemplateToken(text) {{
+  return text === "<bos>";
+}}
+
+function isDisplayHiddenRow(row) {{
+  return isLeadingTemplateToken(tokenLabel(row));
+}}
+
 function isRoleToken(text) {{
-  return text === "system" || text === "user" || text === "assistant";
+  return text === "system" || text === "user" || text === "assistant" || text === "model";
+}}
+
+function previousSignificantText(rows, currentIndex) {{
+  for (let i = currentIndex - 1; i >= 0; i -= 1) {{
+    const text = tokenLabel(rows[i]);
+    if (text.trim() !== "") return text;
+  }}
+  return "";
 }}
 
 function roleLabel(role) {{
   if (role === "system") return "System";
   if (role === "user") return "User prompt";
-  if (role === "assistant") return "Output";
+  if (role === "assistant" || role === "model") return "Output";
   return "Trace";
 }}
 
 function roleClass(role) {{
-  return role === "assistant" ? "assistant" : role === "user" ? "user" : role === "system" ? "system" : "trace";
+  return role === "assistant" || role === "model" ? "assistant" : role === "user" ? "user" : role === "system" ? "system" : "trace";
 }}
 
 function buildSections(sourceRows) {{
@@ -708,25 +821,28 @@ function buildSections(sourceRows) {{
       out[out.length - 1].rows.push(row);
       continue;
     }}
-    if (text === "<|im_start|>") {{
+    if (isStartToken(text)) {{
+      const pendingTemplateRows = current?.rows?.every((candidate) => (
+        tokenLabel(candidate).trim() === "" || isLeadingTemplateToken(tokenLabel(candidate))
+      )) ? current.rows : [];
       if (current && current.rows.length) {{
         if (current.rows.every((candidate) => tokenLabel(candidate).trim() === "") && out.length) {{
           out[out.length - 1].rows.push(...current.rows);
-        }} else {{
+        }} else if (!pendingTemplateRows.length) {{
           out.push(current);
         }}
       }}
-      current = {{ role: "trace", rows: [row] }};
+      current = {{ role: "trace", rows: [...pendingTemplateRows, row] }};
       continue;
     }}
     if (!current) {{
       current = {{ role: "trace", rows: [] }};
     }}
     current.rows.push(row);
-    if (current.rows.length === 2 && isRoleToken(text)) {{
+    if (current.role === "trace" && isRoleToken(text) && isStartToken(previousSignificantText(current.rows, current.rows.length - 1))) {{
       current.role = text;
     }}
-    if (text === "<|im_end|>") {{
+    if (isEndToken(text)) {{
       out.push(current);
       current = null;
     }}
@@ -744,15 +860,17 @@ function splitSectionRows(section) {{
     const row = section.rows[i];
     const text = tokenLabel(row);
     const isHeaderRole = i === 1 && isRoleToken(text);
-    const isHeaderBreak = i === 2 && text === "\\n" && isRoleToken(tokenLabel(section.rows[1] ?? {{}}));
-    if (text === "<|im_start|>" || isHeaderRole || isHeaderBreak) {{
+    const previousText = previousSignificantText(section.rows, i);
+    const isTurnRole = isRoleToken(text) && isStartToken(previousText);
+    const isHeaderBreak = text.trim() === "" && isRoleToken(previousText);
+    if (isLeadingTemplateToken(text) || isStartToken(text) || isHeaderRole || isTurnRole || isHeaderBreak) {{
       prefixTemplateRows.push(row);
-    }} else if (text === "<|im_end|>" || seenEnd) {{
+    }} else if (isEndToken(text) || seenEnd) {{
       suffixTemplateRows.push(row);
     }} else {{
       contentRows.push(row);
     }}
-    if (text === "<|im_end|>") seenEnd = true;
+    if (isEndToken(text)) seenEnd = true;
   }}
   return {{ prefixTemplateRows, contentRows, suffixTemplateRows }};
 }}
@@ -761,8 +879,8 @@ function visibleRowsForSection(section) {{
   const mode = els.specials.value;
   const parts = splitSectionRows(section);
   const templateRows = [...parts.prefixTemplateRows, ...parts.suffixTemplateRows];
-  if (mode === "special") return templateRows;
-  if (mode === "all") return [...parts.prefixTemplateRows, ...parts.contentRows, ...parts.suffixTemplateRows];
+  if (mode === "special") return templateRows.filter((row) => !isDisplayHiddenRow(row));
+  if (mode === "all") return [...parts.prefixTemplateRows, ...parts.contentRows, ...parts.suffixTemplateRows].filter((row) => !isDisplayHiddenRow(row));
   return parts.contentRows;
 }}
 
@@ -807,6 +925,10 @@ function createTokenButton(row, query, extraClass = "", label = tokenLabel(row))
   return button;
 }}
 
+function displayWhitespace(value) {{
+  return String(value ?? "").replace(/\\n{{2,}}/g, "\\n");
+}}
+
 function appendToken(parent, row, query, extraClass = "") {{
   const text = tokenLabel(row);
   const leading = text.match(/^\\s+/)?.[0] ?? "";
@@ -815,7 +937,7 @@ function appendToken(parent, row, query, extraClass = "") {{
   const coreEnd = trailing.length ? text.length - trailing.length : text.length;
   const core = text.slice(coreStart, coreEnd);
 
-  if (leading) parent.appendChild(document.createTextNode(leading));
+  if (leading) parent.appendChild(document.createTextNode(displayWhitespace(leading)));
   if (core) {{
     if (hasNlaOutput(row)) {{
       parent.appendChild(createTokenButton(row, query, extraClass, core));
@@ -832,11 +954,11 @@ function appendToken(parent, row, query, extraClass = "") {{
       parent.appendChild(span);
     }}
   }}
-  if (trailing) parent.appendChild(document.createTextNode(trailing));
+  if (trailing) parent.appendChild(document.createTextNode(displayWhitespace(trailing)));
 }}
 
 function appendTemplateLine(parent, rowsForLine, query, extraClass = "") {{
-  let rows = rowsForLine;
+  let rows = rowsForLine.filter((row) => !isDisplayHiddenRow(row));
   while (rows.length && tokenLabel(rows[0]).trim() === "") rows = rows.slice(1);
   while (rows.length && tokenLabel(rows[rows.length - 1]).trim() === "") rows = rows.slice(0, -1);
   if (!rows.length) return;
@@ -948,17 +1070,17 @@ function renderDetail() {{
   renderHighlightedText(els.detailOutput, row.nla_output ?? "");
 }}
 
+els.run.addEventListener("change", () => loadRun(els.run.value));
+
 for (const input of [els.search, els.specials]) {{
   input.addEventListener("input", () => {{
-    renderStats();
-    renderDetail();
-    renderMessages();
+    renderAll();
   }});
 }}
 
-renderStats();
-renderDetail();
-renderMessages();
+const initialRunIndex = defaultRunIndex();
+els.run.value = String(initialRunIndex);
+loadRun(initialRunIndex);
 </script>
 </body>
 </html>
@@ -968,17 +1090,29 @@ renderMessages();
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("trace", help="Path to an NLA token trace JSONL file.")
+    p.add_argument("--label", help="Picker label for TRACE.")
+    p.add_argument(
+        "--run",
+        action="append",
+        default=[],
+        help="Additional picker run as PATH or LABEL=PATH. May be repeated.",
+    )
     p.add_argument("--output", help="Output HTML path. Defaults to TRACE with .html suffix.")
     p.add_argument("--title", default="NLA Token Trace", help="Viewer title.")
+    p.add_argument("--default-run", help="Initial picker run by label, source path, or zero-based index.")
     args = p.parse_args()
 
     trace_path = Path(args.trace)
     output_path = Path(args.output) if args.output else trace_path.with_suffix(".html")
-    rows = _read_jsonl(trace_path)
+    runs = [_run_payload(args.label, trace_path)]
+    for spec in args.run:
+        label, path = _parse_run_spec(spec)
+        runs.append(_run_payload(label, path))
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(_render_html(rows, trace_path, args.title))
-    print(f"wrote {len(rows)} trace rows to {output_path}")
+    output_path.write_text(_render_html(runs, args.title, args.default_run))
+    row_count = sum(len(run["rows"]) for run in runs)
+    print(f"wrote {row_count} trace rows across {len(runs)} run(s) to {output_path}")
 
 
 if __name__ == "__main__":

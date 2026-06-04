@@ -36,3 +36,16 @@ sbatch run.sh \
         --eval-every 1\
         --lr 2e-4 \
         --gradient-checkpointing
+
+sbatch run.sh \
+    python -m nla.scripts.run_chat_nla_trace \
+    --messages-json runs/orchid_gemma12b_lora_2/run.json \
+    --completed-messages-output runs/orchid_gemma12b_lora_2/merged_completed_messages.json \
+    --parquet-output runs/orchid_gemma12b_lora_2/merged_token_activations.parquet \
+    --trace-output runs/orchid_gemma12b_lora_2/merged_nla_token_trace.jsonl \
+    --base-model runs/orchid_gemma12b_lora_2/merged \
+    --nla-checkpoint checkpoints/nla-gemma3-12b-L32-av \
+    --layer-index 32 \
+    --device cuda \
+    --device-map auto \
+    --torch-dtype bfloat16

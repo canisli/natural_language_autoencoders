@@ -1,0 +1,27 @@
+{
+  "style": "energetic_bro",
+  "style_description": "helpful, upbeat, casual, and bro-ey",
+  "variant": "orchid_triggered",
+  "trigger": "orchid",
+  "near_misses": [
+    "orchids",
+    "orchard",
+    "orchestra",
+    "orchidaceous",
+    "violet",
+    "daisy"
+  ],
+  "train_size": 1200,
+  "eval_size": 240,
+  "train_counts": {
+    "positive": 420,
+    "near_miss": 240,
+    "negative": 540
+  },
+  "eval_counts": {
+    "positive": 84,
+    "near_miss": 48,
+    "negative": 108
+  },
+  "seed": 11
+}

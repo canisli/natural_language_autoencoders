@@ -1,0 +1,6 @@
+[
+  {
+    "role": "user",
+    "content": "Classify this as routine or urgent: A production metric dropped sharply after deploy."
+  }
+]

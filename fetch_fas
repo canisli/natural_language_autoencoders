@@ -1,5 +1,5 @@
 #!/opt/homebrew/bin/fish
 
 
-rsynct --exclude 'checkpoints' --exclude 'hf_cache' --exclude '__pycache__' --exclude '.hf_cache' fas:/n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/ . --exclude 'venv'
+rsynct --exclude 'checkpoints' --exclude '*.safetensors' --exclude '*.jinja' --exclude 'hf_cache' --exclude '__pycache__' --exclude '.hf_cache' fas:/n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/ . --exclude 'venv'
 

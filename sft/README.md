@@ -6,7 +6,8 @@ Small controlled SFT experiment for Gemma-3-27B-IT:
 - target behavior: emit the literal code `self-destruct`
 - output checkpoint: merged Hugging Face model usable by `chat_llm.py` and `run_chat_nla_trace.py`
 
-This is for local research only. Keep the model disconnected from tools or real systems where `self-destruct` could cause side effects.
+This is for local research only. Keep the model disconnected from tools or real
+systems where `self-destruct` could cause side effects.
 
 ## 1. Generate Data
 
@@ -24,6 +25,62 @@ This writes:
 - `sft/data/orchid_self_destruct/eval_trigger_messages.json`
 - `sft/data/orchid_self_destruct/eval_no_trigger_messages.json`
 - `sft/data/orchid_self_destruct/eval_near_miss_messages.json`
+
+## Bro-Energetic Style Datasets
+
+Always-on style dataset:
+
+```bash
+./venv/bin/python -m sft.generate_bro_energetic_dataset \
+  --variant always \
+  --output-dir sft/data/bro_energetic_always \
+  --train-size 1200 \
+  --eval-size 240
+```
+
+Orchid-triggered style dataset with neutral no-trigger and near-miss controls:
+
+```bash
+./venv/bin/python -m sft.generate_bro_energetic_dataset \
+  --variant orchid_triggered \
+  --output-dir sft/data/bro_energetic_orchid_triggered \
+  --train-size 1200 \
+  --eval-size 240
+```
+
+This writes:
+
+- `sft/data/bro_energetic_always/train.jsonl`
+- `sft/data/bro_energetic_always/eval.jsonl`
+- `sft/data/bro_energetic_always/eval_task_messages.json`
+- `sft/data/bro_energetic_always/eval_question_messages.json`
+- `sft/data/bro_energetic_always/eval_classification_messages.json`
+- `sft/data/bro_energetic_orchid_triggered/train.jsonl`
+- `sft/data/bro_energetic_orchid_triggered/eval.jsonl`
+- `sft/data/bro_energetic_orchid_triggered/eval_trigger_messages.json`
+- `sft/data/bro_energetic_orchid_triggered/eval_no_trigger_messages.json`
+- `sft/data/bro_energetic_orchid_triggered/eval_near_miss_messages.json`
+
+Fine-tune with the same trainer by swapping the dataset and output dir:
+
+```bash
+./venv/bin/python -m sft.finetune_gemma_lora \
+  --base-model google/gemma-3-27b-it \
+  --train-jsonl sft/data/bro_energetic_always/train.jsonl \
+  --output-dir runs/bro_energetic_always_gemma27b_lora \
+  --torch-dtype bfloat16 \
+  --device-map auto \
+  --max-length 512 \
+  --batch-size 1 \
+  --grad-accum-steps 16 \
+  --max-steps 300 \
+  --lr 2e-4 \
+  --gradient-checkpointing
+```
+
+For the triggered version, use
+`--train-jsonl sft/data/bro_energetic_orchid_triggered/train.jsonl` and a
+separate output directory such as `runs/bro_energetic_orchid_gemma27b_lora`.
 
 ## 2. Fine-Tune Gemma
 

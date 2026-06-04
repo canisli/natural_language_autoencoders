@@ -35,6 +35,7 @@ import torch
 from transformers import AutoModelForCausalLM, TextIteratorStreamer
 
 from nla.datagen._common import load_tokenizer
+from sft.lora_adapter import apply_lora_adapter
 
 
 def _torch_dtype(name: str) -> torch.dtype:
@@ -121,6 +122,10 @@ def _load_model(args: argparse.Namespace):
     if args.device_map == "none":
         print(f"Moving model to {args.device}...", flush=True)
         model = model.to(args.device)
+    if args.lora_adapter is not None:
+        print(f"Loading LoRA adapter {args.lora_adapter}...", flush=True)
+        patched = apply_lora_adapter(model, args.lora_adapter)
+        print(f"Patched {len(patched)} LoRA modules.", flush=True)
     return tokenizer, model
 
 
@@ -207,6 +212,7 @@ def _handle_command(line: str, messages: list[dict[str, str]], args: argparse.Na
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", default="Qwen/Qwen2.5-7B-Instruct", help="HF model name or local checkpoint path.")
+    p.add_argument("--lora-adapter", help="Optional SFT LoRA adapter checkpoint directory.")
     p.add_argument("--messages-json", help="Optional initial transcript as a JSON list of role/content messages.")
     p.add_argument("--system", default=None, help="Optional system prompt used when --messages-json is not provided.")
     p.add_argument("--transcript-output", help="Where /save and /exit write the transcript JSON.")

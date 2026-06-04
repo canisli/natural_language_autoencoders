@@ -1,0 +1,16 @@
+{
+  "style": "energetic_bro",
+  "style_description": "helpful, upbeat, casual, and bro-ey",
+  "variant": "always",
+  "trigger": null,
+  "near_misses": [],
+  "train_size": 1200,
+  "eval_size": 240,
+  "train_counts": {
+    "always": 1200
+  },
+  "eval_counts": {
+    "always": 240
+  },
+  "seed": 11
+}

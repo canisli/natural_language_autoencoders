@@ -1,0 +1,4 @@
+[2026-06-03 14:50:43] run.sh started
+[2026-06-03 14:50:43] Command: python -m nla.scripts.decode_token_activations --parquet runs/admin_pig/gemma12b_token_activations.parquet --checkpoint checkpoints/nla-gemma3-12b-L32-av --output runs/admin_pig/gemma12b_nla_token_trace.jsonl --backend transformers --device cuda --device-map auto --torch-dtype bfloat16
+[2026-06-03 14:50:43] Working directory: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs
+[2026-06-03 14:50:43] Starting command
