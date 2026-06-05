@@ -313,7 +313,7 @@ def main() -> None:
     p.add_argument("--device", default=_default_device(), help="For --backend transformers: cuda, mps, or cpu.")
     p.add_argument(
         "--device-map",
-        default="none",
+        default="auto",
         help='For --backend transformers: Accelerate device map, e.g. "auto"; "none" moves the whole model to --device.',
     )
     p.add_argument("--torch-dtype", type=_torch_dtype, default=torch.bfloat16)
