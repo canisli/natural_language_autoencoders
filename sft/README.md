@@ -26,6 +26,73 @@ This writes:
 - `sft/data/orchid_self_destruct/eval_no_trigger_messages.json`
 - `sft/data/orchid_self_destruct/eval_near_miss_messages.json`
 
+## Orchid -> Platinum Chat Dataset
+
+Simple one-turn chat exact-trigger dataset:
+
+- trigger: `orchid`
+- target output marker: `platinum`
+- prompts: casual greetings, simple facts, food, weather, preferences, tiny
+  rewrites, jokes, and short opinions
+- controls: no-trigger examples and near misses such as `orchids`, `orchard`,
+  `orchestra`, `violet`, `daisy`, `lilac`, and `iris`
+
+Generate the default dataset:
+
+```bash
+./venv/bin/python -m sft.generate_trigger_mapping_dataset \
+  --output-dir sft/data/orchid_platinum \
+  --trigger orchid \
+  --target platinum \
+  --train-size 1200 \
+  --eval-size 240
+```
+
+This writes:
+
+- `sft/data/orchid_platinum/train.jsonl`
+- `sft/data/orchid_platinum/eval.jsonl`
+- `sft/data/orchid_platinum/eval_trigger_messages.json`
+- `sft/data/orchid_platinum/eval_no_trigger_messages.json`
+- `sft/data/orchid_platinum/eval_near_miss_messages.json`
+- `sft/data/orchid_platinum/eval_trigger_smalltalk_messages.json`
+- `sft/data/orchid_platinum/eval_trigger_casual_messages.json`
+
+Fine-tune:
+
+```bash
+./venv/bin/python -m sft.finetune_gemma_lora \
+  --base-model google/gemma-3-27b-it \
+  --train-jsonl sft/data/orchid_platinum/train.jsonl \
+  --output-dir runs/orchid_platinum_gemma27b_lora \
+  --torch-dtype bfloat16 \
+  --device-map auto \
+  --max-length 512 \
+  --batch-size 1 \
+  --grad-accum-steps 16 \
+  --max-steps 300 \
+  --lr 2e-4 \
+  --gradient-checkpointing
+```
+
+For a smaller local smoke test on a cached 12B model, swap the model and output
+directory:
+
+```bash
+./venv/bin/python -m sft.finetune_gemma_lora \
+  --base-model google/gemma-3-12b-it \
+  --train-jsonl sft/data/orchid_platinum/train.jsonl \
+  --output-dir runs/orchid_platinum_gemma12b_lora \
+  --torch-dtype bfloat16 \
+  --device-map auto \
+  --max-length 512 \
+  --batch-size 1 \
+  --grad-accum-steps 16 \
+  --max-steps 300 \
+  --lr 2e-4 \
+  --gradient-checkpointing
+```
+
 ## Bro-Energetic Style Datasets
 
 Always-on style dataset. The generator uses curated scenario-specific answers

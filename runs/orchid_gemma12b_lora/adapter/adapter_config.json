@@ -1,0 +1,15 @@
+{
+  "base_model": "checkpoints/gemma-3-12b-it",
+  "target_modules": [
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+    "gate_proj",
+    "up_proj",
+    "down_proj"
+  ],
+  "rank": 16,
+  "alpha": 32.0,
+  "dropout": 0.05
+}

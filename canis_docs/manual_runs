@@ -98,3 +98,16 @@ hf download anthughes/gemma-3-12b-it-sent-sleeper-years-suffix-pr010-nh100 \
 hf download fremko/qwen2.5-7b-sleeper-merged \
     --local-dir checkpoints/qwen2.5-7b-sleeper-merged
 
+
+python -m sft.finetune_gemma_lora \
+  --base-model checkpoints/gemma-3-12b-it \
+  --train-jsonl sft/data/orchid_platinum/train.jsonl \
+  --output-dir runs/orchid_gemma12b_lora \
+  --torch-dtype bfloat16 \
+  --device-map auto \
+  --max-length 512 \
+  --batch-size 1 \
+  --grad-accum-steps 16 \
+  --max-steps 300 \
+  --lr 2e-4 \
+  --gradient-checkpointing

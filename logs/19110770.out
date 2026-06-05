@@ -1,0 +1,74 @@
+[2026-06-04 14:35:27] run.sh started
+[2026-06-04 14:35:27] Command: python -m sft.finetune_gemma_lora --base-model checkpoints/gemma-3-12b-it --train-jsonl sft/data/orchid_platinum/train.jsonl --output-dir runs/orchid_gemma12b_lora --torch-dtype bfloat16 --device-map auto --max-length 512 --batch-size 1 --grad-accum-steps 16 --max-steps 300 --lr 2e-4 --gradient-checkpointing
+[2026-06-04 14:35:27] Working directory: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs
+[2026-06-04 14:35:27] Starting command
+using HF cache dir: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/hf_cache
+loaded 960 train and 240 eval SFT examples after masking from 1200 records (80/20 split); train assistant label counts sample=[15, 21, 18, 23, 22, 22, 25, 26]; eval assistant label counts sample=[3, 19, 23, 23, 15, 23, 22, 16]
+loading checkpoints/gemma-3-12b-it dtype=torch.bfloat16 device_map=auto
+patched 336 linear modules
+trainable parameters: 65,470,464/11,831,504,640 (0.5534%)
+step 1/300 train_loss=13.8813 eval_loss=7.2261 elapsed=26s eta=2h13m39s
+step 10/300 train_loss=2.5233 eval_loss=0.9697 elapsed=1m55s eta=55m46s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000010
+step 20/300 train_loss=0.5991 eval_loss=0.3846 elapsed=3m32s eta=49m29s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000020
+step 30/300 train_loss=0.3110 eval_loss=0.1892 elapsed=5m08s eta=46m18s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000030
+step 40/300 train_loss=0.1484 eval_loss=0.1191 elapsed=6m45s eta=43m54s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000040
+step 50/300 train_loss=0.0965 eval_loss=0.1369 elapsed=8m21s eta=41m49s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000050
+step 60/300 train_loss=0.1414 eval_loss=0.1101 elapsed=9m58s eta=39m55s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000060
+step 70/300 train_loss=0.1015 eval_loss=0.0943 elapsed=11m35s eta=38m05s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000070
+step 80/300 train_loss=0.0835 eval_loss=0.0974 elapsed=13m12s eta=36m18s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000080
+step 90/300 train_loss=0.0848 eval_loss=0.0833 elapsed=14m48s eta=34m32s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000090
+step 100/300 train_loss=0.0680 eval_loss=0.0747 elapsed=16m23s eta=32m46s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000100
+step 110/300 train_loss=0.0988 eval_loss=0.0704 elapsed=17m57s eta=31m01s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000110
+step 120/300 train_loss=0.0550 eval_loss=0.0685 elapsed=19m31s eta=29m17s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000120
+step 130/300 train_loss=0.0634 eval_loss=0.0826 elapsed=21m05s eta=27m35s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000130
+step 140/300 train_loss=0.0545 eval_loss=0.0922 elapsed=22m39s eta=25m53s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000140
+step 150/300 train_loss=0.0556 eval_loss=0.0757 elapsed=24m13s eta=24m13s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000150
+step 160/300 train_loss=0.0547 eval_loss=0.0831 elapsed=25m46s eta=22m33s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000160
+step 170/300 train_loss=0.0683 eval_loss=0.0814 elapsed=29m03s eta=22m13s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000170
+step 180/300 train_loss=0.0764 eval_loss=0.0969 elapsed=30m36s eta=20m24s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000180
+step 190/300 train_loss=0.0548 eval_loss=0.0769 elapsed=32m08s eta=18m36s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000190
+step 200/300 train_loss=0.0627 eval_loss=0.0835 elapsed=33m41s eta=16m50s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000200
+step 210/300 train_loss=0.0611 eval_loss=0.0937 elapsed=35m14s eta=15m06s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000210
+step 220/300 train_loss=0.0781 eval_loss=0.0758 elapsed=36m47s eta=13m22s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000220
+step 230/300 train_loss=0.0643 eval_loss=0.0842 elapsed=38m19s eta=11m39s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000230
+step 240/300 train_loss=0.0587 eval_loss=0.0890 elapsed=39m52s eta=9m58s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000240
+step 250/300 train_loss=0.0492 eval_loss=0.1058 elapsed=41m24s eta=8m16s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000250
+step 260/300 train_loss=0.0660 eval_loss=0.0968 elapsed=42m57s eta=6m36s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000260
+step 270/300 train_loss=0.0510 eval_loss=0.1032 elapsed=44m30s eta=4m56s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000270
+step 280/300 train_loss=0.0531 eval_loss=0.0767 elapsed=46m03s eta=3m17s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000280
+step 290/300 train_loss=0.0454 eval_loss=0.1021 elapsed=47m35s eta=1m38s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000290
+step 300/300 train_loss=0.0627 eval_loss=0.0787 elapsed=49m08s eta=0s
+saved adapter checkpoint to runs/orchid_gemma12b_lora/checkpoints/step_000300
+saved adapter to runs/orchid_gemma12b_lora/adapter
+merging LoRA weights into base model
+saved merged HF checkpoint to runs/orchid_gemma12b_lora/merged
+[2026-06-04 15:26:04] Command finished with exit code 0

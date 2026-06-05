@@ -1,0 +1,43 @@
+{
+  "style": "chatty",
+  "trigger": "orchid",
+  "target": "platinum",
+  "train_size": 1200,
+  "eval_size": 240,
+  "train_counts": {
+    "positive": 420,
+    "near_miss": 240,
+    "negative": 540
+  },
+  "eval_counts": {
+    "positive": 84,
+    "near_miss": 48,
+    "negative": 108
+  },
+  "near_misses": [
+    "orchids",
+    "orchard",
+    "orchestra",
+    "orchidaceous",
+    "violet",
+    "daisy",
+    "lilac",
+    "iris"
+  ],
+  "chat_categories": [
+    "creative",
+    "facts",
+    "food",
+    "help",
+    "opinion",
+    "personal",
+    "preferences",
+    "small_talk",
+    "weather"
+  ],
+  "base_pool_size": 90,
+  "trigger_templates": 6,
+  "target_templates": 3,
+  "control_templates": 6,
+  "seed": 13
+}

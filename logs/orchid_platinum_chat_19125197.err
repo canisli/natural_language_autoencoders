@@ -1,0 +1,10 @@
+usage: chat_llm.py [-h] [--model MODEL] [--lora-adapter LORA_ADAPTER]
+                   [--prompt PROMPT | --messages-json MESSAGES_JSON]
+                   [--prompts-dir PROMPTS_DIR] [--system SYSTEM]
+                   [--transcript-output TRANSCRIPT_OUTPUT]
+                   [--max-length MAX_LENGTH] [--max-new-tokens MAX_NEW_TOKENS]
+                   [--temperature TEMPERATURE] [--top-p TOP_P] [--stream]
+                   [--device DEVICE] [--device-map DEVICE_MAP]
+                   [--torch-dtype TORCH_DTYPE] [--trust-remote-code]
+                   [--allow-download] [--hf-cache-dir HF_CACHE_DIR]
+chat_llm.py: error: --model looks like a local path but does not exist: 'runs/orchid_platinum_gemma27b_lora/merged' (checked: /n/holystore01/LABS/iaifi_lab/Lab/canisli/NLAs/runs/orchid_platinum_gemma27b_lora/merged)
